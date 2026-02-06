@@ -1,0 +1,17 @@
+package.xml
+setup.cfg
+setup.py
+diffdrive_urdf/inertial_macros.xacro
+diffdrive_urdf/lidar.xacro
+diffdrive_urdf/properties.xacro
+diffdrive_urdf/robot.urdf.xacro
+diffdrive_urdf/robot_core.xacro
+diffdrive_urdf/ros2_control.xacro
+echo_description/__init__.py
+echo_description.egg-info/PKG-INFO
+echo_description.egg-info/SOURCES.txt
+echo_description.egg-info/dependency_links.txt
+echo_description.egg-info/requires.txt
+echo_description.egg-info/top_level.txt
+echo_description.egg-info/zip-safe
+resource/echo_description

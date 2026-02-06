@@ -1,0 +1,31 @@
+[0.948s] Invoking command in '/home/carlos/mrad_ws_2609_echo/build/echo_description': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/carlos/mrad_ws_2609_echo/build/echo_description/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/carlos/mrad_ws_2609_echo/install/echo_description/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/carlos/mrad_ws_2609_echo/build/echo_description/build --no-deps symlink_data
+[1.167s] running develop
+[1.276s] /usr/lib/python3/dist-packages/setuptools/command/easy_install.py:363: UserWarning: Unbuilt egg for pytest-repeat [unknown version] (/usr/lib/python3/dist-packages)
+[1.276s]   self.local_index = Environment(self.shadow_path + sys.path)
+[1.297s] running egg_info
+[1.297s] creating echo_description.egg-info
+[1.310s] writing echo_description.egg-info/PKG-INFO
+[1.310s] writing dependency_links to echo_description.egg-info/dependency_links.txt
+[1.311s] writing requirements to echo_description.egg-info/requires.txt
+[1.311s] writing top-level names to echo_description.egg-info/top_level.txt
+[1.311s] writing manifest file 'echo_description.egg-info/SOURCES.txt'
+[1.336s] reading manifest file 'echo_description.egg-info/SOURCES.txt'
+[1.336s] writing manifest file 'echo_description.egg-info/SOURCES.txt'
+[1.350s] running build_ext
+[1.350s] Creating /home/carlos/mrad_ws_2609_echo/install/echo_description/lib/python3.12/site-packages/echo-description.egg-link (link to .)
+[1.351s] 
+[1.351s] Installed /home/carlos/mrad_ws_2609_echo/build/echo_description
+[1.351s] running symlink_data
+[1.351s] creating /home/carlos/mrad_ws_2609_echo/install/echo_description/share/ament_index
+[1.351s] creating /home/carlos/mrad_ws_2609_echo/install/echo_description/share/ament_index/resource_index
+[1.351s] creating /home/carlos/mrad_ws_2609_echo/install/echo_description/share/ament_index/resource_index/packages
+[1.352s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/resource/echo_description -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/ament_index/resource_index/packages
+[1.352s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/package.xml -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description
+[1.353s] creating /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+[1.353s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/properties.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+[1.353s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/robot.urdf.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+[1.353s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/ros2_control.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+[1.353s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/lidar.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+[1.353s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/inertial_macros.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+[1.354s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/robot_core.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+[1.400s] Invoked command in '/home/carlos/mrad_ws_2609_echo/build/echo_description' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/carlos/mrad_ws_2609_echo/build/echo_description/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/carlos/mrad_ws_2609_echo/install/echo_description/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/carlos/mrad_ws_2609_echo/build/echo_description/build --no-deps symlink_data

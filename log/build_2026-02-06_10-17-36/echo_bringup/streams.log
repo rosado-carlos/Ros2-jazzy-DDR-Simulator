@@ -1,0 +1,32 @@
+[0.960s] Invoking command in '/home/carlos/mrad_ws_2609_echo/build/echo_bringup': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/carlos/mrad_ws_2609_echo/build/echo_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/carlos/mrad_ws_2609_echo/install/echo_bringup/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/carlos/mrad_ws_2609_echo/build/echo_bringup/build --no-deps symlink_data
+[1.176s] running develop
+[1.285s] /usr/lib/python3/dist-packages/setuptools/command/easy_install.py:363: UserWarning: Unbuilt egg for pytest-repeat [unknown version] (/usr/lib/python3/dist-packages)
+[1.285s]   self.local_index = Environment(self.shadow_path + sys.path)
+[1.307s] running egg_info
+[1.307s] creating echo_bringup.egg-info
+[1.321s] writing echo_bringup.egg-info/PKG-INFO
+[1.321s] writing dependency_links to echo_bringup.egg-info/dependency_links.txt
+[1.321s] writing requirements to echo_bringup.egg-info/requires.txt
+[1.321s] writing top-level names to echo_bringup.egg-info/top_level.txt
+[1.321s] writing manifest file 'echo_bringup.egg-info/SOURCES.txt'
+[1.345s] reading manifest file 'echo_bringup.egg-info/SOURCES.txt'
+[1.346s] writing manifest file 'echo_bringup.egg-info/SOURCES.txt'
+[1.359s] running build_ext
+[1.359s] Creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/lib/python3.12/site-packages/echo-bringup.egg-link (link to .)
+[1.360s] 
+[1.360s] Installed /home/carlos/mrad_ws_2609_echo/build/echo_bringup
+[1.360s] running symlink_data
+[1.360s] creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/ament_index
+[1.360s] creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/ament_index/resource_index
+[1.361s] creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/ament_index/resource_index/packages
+[1.361s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/resource/echo_bringup -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/ament_index/resource_index/packages
+[1.361s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/package.xml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup
+[1.361s] creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+[1.362s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/config/twist_mux.yaml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+[1.362s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/config/gaz_ros2_ctl_use_sim.yaml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+[1.362s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/config/my_controllers.yaml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+[1.362s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/config/joystick.yaml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+[1.363s] creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/launch
+[1.363s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/launch/rsp.launch.py -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/launch
+[1.363s] symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/launch/gz_spawn.launch.py -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/launch
+[1.413s] Invoked command in '/home/carlos/mrad_ws_2609_echo/build/echo_bringup' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/carlos/mrad_ws_2609_echo/build/echo_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/carlos/mrad_ws_2609_echo/install/echo_bringup/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/carlos/mrad_ws_2609_echo/build/echo_bringup/build --no-deps symlink_data

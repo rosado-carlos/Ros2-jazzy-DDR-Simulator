@@ -1,0 +1,13 @@
+package.xml
+setup.cfg
+setup.py
+config/topic_bridge.yaml
+echo_gazebo/__init__.py
+echo_gazebo.egg-info/PKG-INFO
+echo_gazebo.egg-info/SOURCES.txt
+echo_gazebo.egg-info/dependency_links.txt
+echo_gazebo.egg-info/requires.txt
+echo_gazebo.egg-info/top_level.txt
+echo_gazebo.egg-info/zip-safe
+resource/echo_gazebo
+worlds/empty_world.sdf

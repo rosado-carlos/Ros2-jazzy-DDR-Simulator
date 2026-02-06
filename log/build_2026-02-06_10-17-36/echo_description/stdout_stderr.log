@@ -1,0 +1,29 @@
+running develop
+/usr/lib/python3/dist-packages/setuptools/command/easy_install.py:363: UserWarning: Unbuilt egg for pytest-repeat [unknown version] (/usr/lib/python3/dist-packages)
+  self.local_index = Environment(self.shadow_path + sys.path)
+running egg_info
+creating echo_description.egg-info
+writing echo_description.egg-info/PKG-INFO
+writing dependency_links to echo_description.egg-info/dependency_links.txt
+writing requirements to echo_description.egg-info/requires.txt
+writing top-level names to echo_description.egg-info/top_level.txt
+writing manifest file 'echo_description.egg-info/SOURCES.txt'
+reading manifest file 'echo_description.egg-info/SOURCES.txt'
+writing manifest file 'echo_description.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/carlos/mrad_ws_2609_echo/install/echo_description/lib/python3.12/site-packages/echo-description.egg-link (link to .)
+
+Installed /home/carlos/mrad_ws_2609_echo/build/echo_description
+running symlink_data
+creating /home/carlos/mrad_ws_2609_echo/install/echo_description/share/ament_index
+creating /home/carlos/mrad_ws_2609_echo/install/echo_description/share/ament_index/resource_index
+creating /home/carlos/mrad_ws_2609_echo/install/echo_description/share/ament_index/resource_index/packages
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/resource/echo_description -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/ament_index/resource_index/packages
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/package.xml -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description
+creating /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/properties.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/robot.urdf.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/ros2_control.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/lidar.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/inertial_macros.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_description/diffdrive_urdf/robot_core.xacro -> /home/carlos/mrad_ws_2609_echo/install/echo_description/share/echo_description/diffdrive_urdf

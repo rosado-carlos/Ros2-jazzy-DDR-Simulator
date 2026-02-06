@@ -1,0 +1,1 @@
+/home/carlos/mrad_ws_2609_echo/build/echo_control/ament_cmake_core/echo_controlConfig-version.cmake

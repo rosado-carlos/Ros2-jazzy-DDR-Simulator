@@ -1,0 +1,30 @@
+running develop
+/usr/lib/python3/dist-packages/setuptools/command/easy_install.py:363: UserWarning: Unbuilt egg for pytest-repeat [unknown version] (/usr/lib/python3/dist-packages)
+  self.local_index = Environment(self.shadow_path + sys.path)
+running egg_info
+creating echo_bringup.egg-info
+writing echo_bringup.egg-info/PKG-INFO
+writing dependency_links to echo_bringup.egg-info/dependency_links.txt
+writing requirements to echo_bringup.egg-info/requires.txt
+writing top-level names to echo_bringup.egg-info/top_level.txt
+writing manifest file 'echo_bringup.egg-info/SOURCES.txt'
+reading manifest file 'echo_bringup.egg-info/SOURCES.txt'
+writing manifest file 'echo_bringup.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/lib/python3.12/site-packages/echo-bringup.egg-link (link to .)
+
+Installed /home/carlos/mrad_ws_2609_echo/build/echo_bringup
+running symlink_data
+creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/ament_index
+creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/ament_index/resource_index
+creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/ament_index/resource_index/packages
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/resource/echo_bringup -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/ament_index/resource_index/packages
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/package.xml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup
+creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/config/twist_mux.yaml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/config/gaz_ros2_ctl_use_sim.yaml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/config/my_controllers.yaml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/config/joystick.yaml -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/config
+creating /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/launch
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/launch/rsp.launch.py -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/launch
+symbolically linking /home/carlos/mrad_ws_2609_echo/build/echo_bringup/launch/gz_spawn.launch.py -> /home/carlos/mrad_ws_2609_echo/install/echo_bringup/share/echo_bringup/launch

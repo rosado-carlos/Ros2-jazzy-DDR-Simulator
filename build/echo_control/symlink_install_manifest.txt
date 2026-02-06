@@ -1,0 +1,15 @@
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/ament_index/resource_index/package_run_dependencies/echo_control
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/ament_index/resource_index/parent_prefix_path/echo_control
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/environment/ament_prefix_path.sh
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/environment/ament_prefix_path.dsv
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/environment/path.sh
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/environment/path.dsv
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/local_setup.bash
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/local_setup.sh
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/local_setup.zsh
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/local_setup.dsv
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/package.dsv
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/ament_index/resource_index/packages/echo_control
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/cmake/echo_controlConfig.cmake
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/cmake/echo_controlConfig-version.cmake
+/home/carlos/mrad_ws_2609_echo/install/echo_control/share/echo_control/package.xml

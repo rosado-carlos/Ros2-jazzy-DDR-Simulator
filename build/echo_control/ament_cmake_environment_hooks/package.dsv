@@ -1,4 +1,0 @@
-source;share/echo_control/local_setup.bash
-source;share/echo_control/local_setup.dsv
-source;share/echo_control/local_setup.sh
-source;share/echo_control/local_setup.zsh

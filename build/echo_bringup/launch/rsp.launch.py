@@ -1,1 +1,0 @@
-/home/carlos/mrad_ws_2609_echo/src/echo_bringup/launch/rsp.launch.py

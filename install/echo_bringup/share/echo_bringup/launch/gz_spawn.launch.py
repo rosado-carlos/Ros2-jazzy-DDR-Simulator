@@ -1,1 +1,0 @@
-/home/carlos/mrad_ws_2609_echo/build/echo_bringup/launch/gz_spawn.launch.py

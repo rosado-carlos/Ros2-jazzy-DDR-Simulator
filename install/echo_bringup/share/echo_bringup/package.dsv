@@ -1,9 +1,0 @@
-source;share/echo_bringup/hook/pythonpath.ps1
-source;share/echo_bringup/hook/pythonpath.dsv
-source;share/echo_bringup/hook/pythonpath.sh
-source;share/echo_bringup/hook/ament_prefix_path.ps1
-source;share/echo_bringup/hook/ament_prefix_path.dsv
-source;share/echo_bringup/hook/ament_prefix_path.sh
-source;../../build/echo_bringup/share/echo_bringup/hook/pythonpath_develop.ps1
-source;../../build/echo_bringup/share/echo_bringup/hook/pythonpath_develop.dsv
-source;../../build/echo_bringup/share/echo_bringup/hook/pythonpath_develop.sh

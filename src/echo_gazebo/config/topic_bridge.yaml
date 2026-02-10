@@ -22,14 +22,8 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-- ros_topic_name: "/depth_camera/image"
-  gz_topic_name: "/world/empty_world/model/diffbot/link/depth_camera_link/sensor/depth_camera/depth_image"
-  ros_type_name: "sensor_msgs/msg/Image"
-  gz_type_name: "gz.msgs.Image"
-  direction: GZ_TO_ROS
-
 - ros_topic_name: "/depth_camera/points"
-  gz_topic_name: "/world/empty_world/model/diffbot/link/depth_camera_link/sensor/depth_camera/points"
+  gz_topic_name: "/depth_camera/points"
   ros_type_name: "sensor_msgs/msg/PointCloud2"
   gz_type_name: "gz.msgs.PointCloudPacked"
   direction: GZ_TO_ROS

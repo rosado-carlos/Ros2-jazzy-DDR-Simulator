@@ -66,6 +66,13 @@ def generate_launch_description():
         ],
     )
 
+    depth_cloud_tf = Node( package="tf2_ros", 
+                          executable="static_transform_publisher", 
+                          arguments=[ "0", "0", "0", "0", "0", "0", 
+                                     "depth_camera_link", 
+                                     "diffbot/base_link/depth_camera", ], 
+                          output="screen", )
+
     diff_drive_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -120,6 +127,7 @@ def generate_launch_description():
         rsp,
         spawn,
         bridge,
+        depth_cloud_tf,
         diff_drive_spawner,
         joint_broad_spawner,
         joy_node,

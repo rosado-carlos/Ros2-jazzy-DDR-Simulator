@@ -34,6 +34,14 @@
             <geometry>
                <box size="${lx} ${ly} ${lz}"/>
             </geometry>
+             <surface>
+                <friction>
+                <ode>
+                    <mu>1.0</mu>
+                    <mu2>1.0</mu2>
+                </ode>
+                </friction>
+            </surface>
         </collision>
         <xacro:inertial_box mass="5.0" x="${lx}" y="${ly}" z="${lz}">
             <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -59,9 +67,16 @@
         </visual>
         <collision>
             <geometry>
-                  <sphere radius="${rad_w}" />
+                  <cylinder radius="${rad_w}" length="${le_w}"/>
             </geometry>
-
+             <surface>
+                <friction>
+                <ode>
+                    <mu>1.0</mu>
+                    <mu2>1.0</mu2>
+                </ode>
+                </friction>
+            </surface>
         </collision>
         <xacro:inertial_cylinder mass="0.1" length="${le_w}" radius="${rad_w}">
             <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -87,7 +102,7 @@
         </visual>
         <collision>
             <geometry>
-                  <sphere radius="${rad_w}" />
+                  <cylinder radius="${rad_w}" length="${le_w}"/>
             </geometry>
 
         </collision>

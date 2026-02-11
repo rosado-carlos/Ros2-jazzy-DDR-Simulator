@@ -4,6 +4,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import TwistStamped
+from nav_msgs.msg import Odometry
 
 
 class AEBNode(Node):
@@ -12,7 +13,7 @@ class AEBNode(Node):
         super().__init__('aeb')
 
         # ---------- parámetros ----------
-        self.declare_parameter('ttc_threshold', 1.0)
+        self.declare_parameter('ttc_threshold', 0.5)
         self.declare_parameter('front_angle_deg', 30.0)
         self.declare_parameter('min_speed', 0.05)
         self.declare_parameter('scan_timeout', 0.5)
@@ -37,10 +38,10 @@ class AEBNode(Node):
             10
         )
 
-        self.cmd_sub = self.create_subscription(
-            TwistStamped,
-            '/cmd_vel_joy',
-            self.cmd_callback,
+        self.odom_sub = self.create_subscription(
+            Odometry,
+            '/diffdrive_controller/odom',
+            self.odom_callback,
             10
         )
 
@@ -80,7 +81,7 @@ class AEBNode(Node):
     # --------------------------------------------------
     # CMD VEL
     # --------------------------------------------------
-    def cmd_callback(self, msg):
+    def odom_callback(self, msg):
 
         now = self.get_clock().now()
 
@@ -89,7 +90,7 @@ class AEBNode(Node):
             (now - self.last_scan_time).nanoseconds * 1e-9 > self.scan_timeout
         )
 
-        v = float(msg.twist.linear.x)
+        v = float(msg.twist.twist.linear.x)
 
         should_block = False
         ttc = float('inf')
@@ -110,13 +111,13 @@ class AEBNode(Node):
         out = TwistStamped()
         out.header.stamp = now.to_msg()
         out.header.frame_id = msg.header.frame_id
-        out.twist = msg.twist
+        out.twist = msg.twist.twist
 
         if should_block:
             out.twist.linear.x = 0.0
             out.twist.angular.z = 0.0
+            self.cmd_pub.publish(out)
 
-        self.cmd_pub.publish(out)
 
 
 def main(args=None):

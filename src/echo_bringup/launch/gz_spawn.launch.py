@@ -112,6 +112,12 @@ def generate_launch_description():
                     remappings=[('/cmd_vel_out','/diffdrive_controller/cmd_vel')]
     )
 
+    aeb_node = Node(
+        package=bringup_pkg_name,
+        executable='aeb_node',
+        output='screen'
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             "use_sim_time",
@@ -133,4 +139,5 @@ def generate_launch_description():
         joy_node,
         teleop_node,
         twist_mux_node,
+        aeb_node,
     ])

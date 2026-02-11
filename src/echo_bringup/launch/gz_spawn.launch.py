@@ -111,6 +111,17 @@ def generate_launch_description():
                     parameters=[twist_mux_params,{'use_sim_time': True}],
                     remappings=[('/cmd_vel_out','/diffdrive_controller/cmd_vel')]
     )
+    aeb_node = Node(
+    package=bringup_pkg_name,
+    executable='aeb_node',
+    output='screen'
+    )
+    ttc_gap_node = Node(
+    package=bringup_pkg_name,
+    executable='ttc_gap_node',
+    output='screen'
+    )
+
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -120,7 +131,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "world",
-            default_value=os.path.join(get_package_share_directory(gazebo_pkg_name), "worlds", "empty_world.sdf"),
+            default_value=os.path.join(get_package_share_directory(gazebo_pkg_name), "worlds", "racetrack.sdf"),
             description="Full path to world SDF file",
         ),
         gz_launch,
@@ -133,4 +144,7 @@ def generate_launch_description():
         joy_node,
         teleop_node,
         twist_mux_node,
+        aeb_node,
+        ttc_gap_node,
+
     ])

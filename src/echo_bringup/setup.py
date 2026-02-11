@@ -28,6 +28,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'aeb_node = echo_bringup.aeb_node:main',
+            'ttc_gap_node = echo_bringup.ttc_gap_node:main',
+
         ],
     },
 )

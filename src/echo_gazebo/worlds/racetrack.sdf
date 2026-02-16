@@ -67,11 +67,12 @@
 
     <model name="stl_racetrack">
 		  <static>true</static>
+      <pose>0.375 0 0 0 0 -1.5708</pose>
 		  <link name="link">
             <collision name="collision">
 		      <geometry>
 		        <mesh>
-		          <uri>/home/carlos/mrad_ws_2609_echo/src/echo_gazebo/worlds/Practice_track.stl</uri>
+		          <uri>src/echo_gazebo/worlds/Practice_track.stl</uri>
 		          <scale>0.07 0.07 0.07</scale>
 		        </mesh>
 		      </geometry>
@@ -86,7 +87,7 @@
 
 		      <geometry>
 		        <mesh>
-		          <uri>/home/carlos/mrad_ws_2609_echo/src/echo_gazebo/worlds/Practice_track.stl</uri>
+		          <uri>src/echo_gazebo/worlds/Practice_track.stl</uri>
 		          <scale>0.07 0.07 0.07</scale>
 		        </mesh>
 		      </geometry>

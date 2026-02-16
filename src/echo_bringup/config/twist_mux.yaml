@@ -19,3 +19,8 @@ twist_mux:
         topic   : cmd_vel_key
         timeout : 0.5
         priority: 50
+
+      wall-following control  : 
+        topic   : cmd_vel_ctrl
+        timeout : 0.5
+        priority: 300

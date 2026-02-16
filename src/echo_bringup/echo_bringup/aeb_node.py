@@ -135,6 +135,10 @@ class AEBNode(Node):
         stamp_s = float(stamp.sec) + 1e-9 * float(stamp.nanosec)
 
         if self.prev_ranges is None or self.prev_stamp is None:
+            
+        if abs(self.v_est) < self.min_speed:
+            self.v_est = 0.0
+            
             self.prev_ranges = list(msg.ranges)
             self.prev_stamp = stamp_s
             return

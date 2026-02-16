@@ -48,7 +48,9 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         # ---------- subscriptors ----------
         self.scan_sub = self.create_subscription(LaserScan,'/scan',self.scan_callback,10)   
 
-        self.cmdjoy_sub = self.create_subscription(TwistStamped,'/cmd_vel_joy',self.cmdjoy_callback,10)
+        self.cmdjoy_sub = self.create_subscription(TwistStamped,'/cmd_vel_joy',self.cmd_control_callback,10)
+
+        self.cmdjoy_sub = self.create_subscription(TwistStamped,'/cmd_vel_ctrl',self.cmdjoy_callback,10)
 
         # ---------- publisher ----------
         self.cmd_pub = self.create_publisher(TwistStamped,'/cmd_vel_safe',10)
@@ -213,7 +215,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         elif self.d_min > 0.7:
             self.ttc_treshold = float(self.get_parameter("ttc_threshold").value)
         elif self.d_min > 0.5:
-            self.ttc_treshold = 1.3*float(self.get_parameter("ttc_threshold").value)
+            self.ttc_treshold = 1*float(self.get_parameter("ttc_threshold").value)
         else:
             self.ttc_treshold = 1.7*float(self.get_parameter("ttc_threshold").value)
 
@@ -249,6 +251,9 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
     # --------------------------------------------------
 
     def cmdjoy_callback(self, msg):
+        self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
+    
+    def cmd_control_callback(self, msg):
         self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
 
 

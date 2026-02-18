@@ -49,7 +49,7 @@ class DistFinder(Node):
         r = data.ranges[index]
 
         if math.isinf(r) or math.isnan(r):
-            return 0.0
+            return data.range_max
 
         return r
 

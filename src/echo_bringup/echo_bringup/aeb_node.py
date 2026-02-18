@@ -13,7 +13,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         # ---------- parameters ----------
         #This declare ROS parameters with default values (can be changed from launch/CLI).
         self.declare_parameter("ttc_threshold", 1)
-        self.declare_parameter("min_distance", 0.65)
+        self.declare_parameter("min_distance", 0.55)
         self.declare_parameter("robot_radius", 0.3)
 
         #This are angle parameters in degrees that will be converted to radians.
@@ -58,6 +58,8 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         #Test
         self.d_min = 0.0
 
+        self.twist_w = 0.0
+
     # --------------------------------------------------
     # Small helpers for lidar indexing and validation
     # --------------------------------------------------
@@ -75,7 +77,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         out.header.stamp = self.get_clock().now().to_msg()
         out.header.frame_id = ""
         out.twist.linear.x = 0.0
-        out.twist.angular.z = 0.0
+        out.twist.angular.z = self.twist_w
         self.cmd_pub.publish(out)
 
     # --------------------------------------------------
@@ -209,11 +211,11 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         prev_lock = self.lock   #This store previous lock state to detect transitions.
 
         if self.d_min > 1.3:
-            self.ttc_treshold = 0.3*float(self.get_parameter("ttc_threshold").value)
+            self.ttc_treshold = 0.1*float(self.get_parameter("ttc_threshold").value)
         elif self.d_min > 1:
-            self.ttc_treshold = 0.5*float(self.get_parameter("ttc_threshold").value)
+            self.ttc_treshold = 0.3*float(self.get_parameter("ttc_threshold").value)
         elif self.d_min > 0.7:
-            self.ttc_treshold = float(self.get_parameter("ttc_threshold").value)
+            self.ttc_treshold = 0.5*float(self.get_parameter("ttc_threshold").value)
         elif self.d_min > 0.5:
             self.ttc_treshold = 1.25*float(self.get_parameter("ttc_threshold").value)
         else:
@@ -252,9 +254,11 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
 
     def cmdjoy_callback(self, msg):
         self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
+        self.twist_w = msg.twist.angular.z
     
     def cmd_control_callback(self, msg):
         self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
+        self.twist_w = msg.twist.angular.z
 
 
 def main(args=None):

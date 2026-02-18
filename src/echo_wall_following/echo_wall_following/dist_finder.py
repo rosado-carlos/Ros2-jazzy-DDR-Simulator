@@ -13,9 +13,9 @@ class DistFinder(Node):
         super().__init__('dist_finder')
 
         # --- Parameters ---
-        self.declare_parameter('theta_deg', 45.0)
-        self.declare_parameter('lookahead_dist', 1.0)
-        self.declare_parameter('desired_distance', 1.0)
+        self.declare_parameter('theta_deg', 53.0)
+        self.declare_parameter('lookahead_dist', 1.5)
+        self.declare_parameter('desired_distance', 0.85)
 
         self.theta = math.radians(
             self.get_parameter('theta_deg').value 

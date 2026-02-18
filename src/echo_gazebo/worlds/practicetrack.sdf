@@ -67,7 +67,7 @@
 
     <model name="stl_racetrack">
 		  <static>true</static>
-      <pose>0.375 0 0 0 0 -1.5708</pose>
+      <pose>0.375 0 0 0 0 3.1416</pose>
 		  <link name="link">
             <collision name="collision">
 		      <geometry>

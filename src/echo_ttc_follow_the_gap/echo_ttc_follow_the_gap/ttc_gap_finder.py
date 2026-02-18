@@ -12,7 +12,7 @@ class TTCGapFinder(Node):
     def __init__(self):
         super().__init__('ttc_gap_finder')
 
-        self.declare_parameter('bubble_radius', 1.5)
+        self.declare_parameter('bubble_radius', 1.2)
         self.declare_parameter('fov_deg', 100.0)
         self.declare_parameter('v_forward', 0.5)
 

@@ -81,7 +81,7 @@
         <collision name='maze_collision'>
           <geometry>
             <mesh>
-              <uri>src/echo_gazebo/worlds/RaceTrackObs.stl</uri> #Chamge me
+              <uri>src/echo_gazebo/worlds/RaceTrack.stl</uri> #Chamge me
               <scale>10 10 10</scale>
             </mesh>
           </geometry>
@@ -96,7 +96,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>src/echo_gazebo/worlds/RaceTrackObs.stl</uri>   #Change me
+              <uri>src/echo_gazebo/worlds/RaceTrack.stl</uri>   #Change me
               <scale>10 10 10</scale>
             </mesh>
           </geometry>

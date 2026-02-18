@@ -14,7 +14,7 @@ class TTCControl(Node):
 
         # -------- PARAMETERS --------
         self.declare_parameter('kp_steering', 3.0)
-        self.declare_parameter('v_max', 3.0)
+        self.declare_parameter('v_max', 0.7)
         self.declare_parameter('ttc_min', 0.8)
         self.declare_parameter('max_steering', 2.5)
         self.declare_parameter('steering_slowdown_gain', 2.0)

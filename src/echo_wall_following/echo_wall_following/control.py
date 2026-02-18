@@ -17,9 +17,9 @@ class WallFollowerControl(Node):
         self.declare_parameter('kd', 1.5)
         self.declare_parameter('max_steering', 100)
 
-        self.declare_parameter('max_velocity', 1.5)
-        self.declare_parameter('min_velocity', 0.1)
-        self.declare_parameter('kv', 3.0)  # velocidad adaptativa
+        self.declare_parameter('max_velocity', 3)
+        self.declare_parameter('min_velocity', 0.2)
+        self.declare_parameter('kv', 2.3)  # velocidad adaptativa
 
         self.kp = self.get_parameter('kp').value
         self.kd = self.get_parameter('kd').value

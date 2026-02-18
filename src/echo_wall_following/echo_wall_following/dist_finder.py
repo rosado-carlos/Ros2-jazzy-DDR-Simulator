@@ -13,12 +13,9 @@ class DistFinder(Node):
         super().__init__('dist_finder')
 
         # --- Parameters ---
-        self.declare_parameter('theta_deg', 45.0)
-        self.declare_parameter('lookahead_dist', 1.0)
-        self.declare_parameter('desired_distance', 0.8)
-        self.declare_parameter('security_factor', 1.3)
-
-        self.scalar = self.get_parameter('security_factor').value 
+        self.declare_parameter('theta_deg', 53.0)
+        self.declare_parameter('lookahead_dist', 1.5)
+        self.declare_parameter('desired_distance', 0.85)
 
         self.theta = math.radians(
             self.get_parameter('theta_deg').value 
@@ -52,7 +49,7 @@ class DistFinder(Node):
         r = data.ranges[index]
 
         if math.isinf(r) or math.isnan(r):
-            return 0.0
+            return data.range_max
 
         return r
 
@@ -80,7 +77,7 @@ class DistFinder(Node):
 
         # --- Error definition ---
         error = self.desired_distance - y_future
-        error = self.scalar * error
+
         msg = Float32()
         msg.data = float(error)
         self.error_pub.publish(msg)

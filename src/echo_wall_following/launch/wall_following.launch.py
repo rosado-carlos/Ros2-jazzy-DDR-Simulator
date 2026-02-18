@@ -17,7 +17,7 @@ def generate_launch_description():
 
     kd_arg = DeclareLaunchArgument(
         'kd',
-        default_value='0.5',
+        default_value='0.48',
         description='Derivative gain'
     )
 

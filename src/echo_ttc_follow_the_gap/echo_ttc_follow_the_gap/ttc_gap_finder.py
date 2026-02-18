@@ -12,14 +12,14 @@ class TTCGapFinder(Node):
     def __init__(self):
         super().__init__('ttc_gap_finder')
 
-        # ---------------- PARAMETERS ----------------
-        self.declare_parameter('ttc_min', 0.5)
+        self.declare_parameter('bubble_radius', 0.5)
+        self.declare_parameter('fov_deg', 90.0)
         self.declare_parameter('v_forward', 1.0)
 
-        self.ttc_min = self.get_parameter('ttc_min').value
+        self.bubble_radius = self.get_parameter('bubble_radius').value
+        self.fov = math.radians(self.get_parameter('fov_deg').value)
         self.v = self.get_parameter('v_forward').value
 
-        # ---------------- SUBSCRIBER ----------------
         self.scan_sub = self.create_subscription(
             LaserScan,
             '/scan',
@@ -27,16 +27,11 @@ class TTCGapFinder(Node):
             10
         )
 
-        # ---------------- PUBLISHERS ----------------
         self.gap_pub = self.create_publisher(Float32, '/gap_angle', 10)
         self.ttc_pub = self.create_publisher(Float32, '/min_ttc', 10)
 
-        self.get_logger().info("TTC Gap Finder Started")
-
     # --------------------------------------------------
     def compute_ttc(self, distance, angle):
-        """Compute TTC for a single LiDAR ray"""
-
         relative_velocity = self.v * math.cos(angle)
 
         if relative_velocity <= 0.0:
@@ -47,38 +42,45 @@ class TTCGapFinder(Node):
     # --------------------------------------------------
     def scan_callback(self, scan):
 
-        ranges = scan.ranges
-        angle = scan.angle_min
-
-        safe_mask = []
+        ranges = list(scan.ranges)
         min_ttc = float('inf')
 
-        # ---------- Compute TTC for each ray ----------
-        for r in ranges:
+        # -------- LIMIT FOV --------
+        for i in range(len(ranges)):
+            angle = scan.angle_min + i * scan.angle_increment
+            if abs(angle) > self.fov:
+                ranges[i] = 0.0
 
-            if math.isinf(r) or math.isnan(r):
-                safe_mask.append(True)
-                angle += scan.angle_increment
-                continue
+        # -------- FIND CLOSEST POINT --------
+        min_distance = float('inf')
+        closest_index = 0
 
-            ttc = self.compute_ttc(r, angle)
+        for i, r in enumerate(ranges):
+            if r > 0.0 and r < min_distance:
+                min_distance = r
+                closest_index = i
 
-            min_ttc = min(min_ttc, ttc)
+        # -------- CREATE BUBBLE --------
+        if min_distance < float('inf'):
 
-            safe_mask.append(ttc >= self.ttc_min)
+            bubble_angle = math.atan2(self.bubble_radius, min_distance)
+            bubble_size = int(bubble_angle / scan.angle_increment)
 
-            angle += scan.angle_increment
+            start = max(0, closest_index - bubble_size)
+            end = min(len(ranges), closest_index + bubble_size)
 
-        # ---------- Find largest contiguous safe gap ----------
+            for i in range(start, end):
+                ranges[i] = 0.0
+
+        # -------- FIND LARGEST GAP --------
         max_gap_start = 0
         max_gap_size = 0
-
         current_start = None
         current_size = 0
 
-        for i, safe in enumerate(safe_mask):
+        for i, r in enumerate(ranges):
 
-            if safe:
+            if r > 0.0:
                 if current_start is None:
                     current_start = i
                     current_size = 1
@@ -91,19 +93,29 @@ class TTCGapFinder(Node):
                 current_start = None
                 current_size = 0
 
-        # Final check
         if current_size > max_gap_size:
             max_gap_size = current_size
             max_gap_start = current_start
 
-        # ---------- Compute center angle ----------
+        # -------- SELECT FARTHEST POINT --------
+        # -------- SELECT CENTER OF GAP --------
         if max_gap_size > 0:
-            center_index = max_gap_start + max_gap_size // 2
-            gap_angle = scan.angle_min + center_index * scan.angle_increment
-        else:
-            gap_angle = 0.0  # fallback
 
-        # ---------- Publish ----------
+            best_index = max_gap_start + max_gap_size // 2
+            gap_angle = scan.angle_min + best_index * scan.angle_increment
+
+
+        else:
+            gap_angle = 0.0
+
+        # -------- COMPUTE MIN TTC --------
+        for i, r in enumerate(scan.ranges):
+            angle = scan.angle_min + i * scan.angle_increment
+            if r > 0.0:
+                ttc = self.compute_ttc(r, angle)
+                min_ttc = min(min_ttc, ttc)
+
+        # -------- PUBLISH --------
         gap_msg = Float32()
         gap_msg.data = float(gap_angle)
         self.gap_pub.publish(gap_msg)
@@ -111,10 +123,6 @@ class TTCGapFinder(Node):
         ttc_msg = Float32()
         ttc_msg.data = float(min_ttc)
         self.ttc_pub.publish(ttc_msg)
-
-        self.get_logger().info(
-            f"Gap angle: {math.degrees(gap_angle):.2f} deg | Min TTC: {min_ttc:.2f}"
-        )
 
 
 def main(args=None):

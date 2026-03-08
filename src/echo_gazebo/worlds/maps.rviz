@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /LaserScan1
         - /Map1
         - /Map1/Status1
         - /Map1/Topic1
@@ -147,7 +148,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.10000000149011612
       Style: Flat Squares
       Topic:
         Depth: 5
@@ -261,16 +262,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 21.69256019592285
+      Distance: 40.7169075012207
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.5035220384597778
-        Y: 0.4718402326107025
-        Z: 1.1242412328720093
+        X: -0.24523942172527313
+        Y: -1.5756462812423706
+        Z: 1.1259559392929077
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -279,7 +280,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.3453975915908813
+      Yaw: 1.5503973960876465
     Saved: ~
 Window Geometry:
   Displays:

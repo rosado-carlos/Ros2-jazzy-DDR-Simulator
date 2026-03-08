@@ -6,6 +6,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Exec
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch.conditions import IfCondition, UnlessCondition
 
 import xacro
 
@@ -39,6 +40,20 @@ def generate_launch_description():
             )
         ),
         launch_arguments={"gz_args": ['-r -v4 ', world], 'on_exit_shutdown': 'true'}.items(),
+        condition=IfCondition(LaunchConfiguration('gz_mode')),
+    )
+
+    # --- Launch Gazebo Headless (via ros_gz_sim launch file) ---
+    gz_headless_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("ros_gz_sim"),
+                "launch",
+                "gz_sim.launch.py",
+            )
+        ),
+        launch_arguments={"gz_args": ['-r -s -v4 ', world], 'headless-rendering': 'true', 'on_exit_shutdown': 'true'}.items(),
+        condition=UnlessCondition(LaunchConfiguration('gz_mode')),
     )
 
     # --- Spawn entity into Gazebo from robot_description topic ---
@@ -49,7 +64,7 @@ def generate_launch_description():
         arguments=[
             "-name", "diffbot",
             "-topic", "robot_description",
-            "-x", "-18.44", "-y", "4.29", "-z", "0.5", "-R", "0", "-P", "0", "-Y", "1.57"
+            "-x", "0.0", "-y", "0.0", "-z", "0.5", "-R", "0", "-P", "0", "-Y", "1.57"
         ],
     )
    
@@ -130,6 +145,7 @@ def generate_launch_description():
             description="Full path to world SDF file",
         ),
         gz_launch,
+        gz_headless_launch,
         rsp,
         spawn,
         bridge,

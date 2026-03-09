@@ -28,7 +28,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'dijkstra_path_planner=echo_path_planner.dijkstra_path_planner:main'
+            'dijkstra_path_planner=echo_path_planner.dijkstra_path_planner:main',
+            'bitstar_planner_node=echo_path_planner.bitstar_planner_node:main',
         ],
     },
 )

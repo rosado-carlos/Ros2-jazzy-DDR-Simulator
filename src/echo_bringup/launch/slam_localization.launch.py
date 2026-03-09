@@ -3,6 +3,7 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch_ros.actions import Node
 from launch.actions import (DeclareLaunchArgument, EmitEvent, LogInfo,
                             RegisterEventHandler)
 from launch.conditions import IfCondition
@@ -21,7 +22,7 @@ def generate_launch_description():
     slam_params_file = LaunchConfiguration('slam_params_file')
     autostart = LaunchConfiguration('autostart')
     package_share_dir = get_package_share_directory('echo_gazebo')
-    map_file = os.path.join(package_share_dir, 'maps', 'mi_mapa')
+    map_file = os.path.join(package_share_dir, 'maps', 'map2')
 
     declare_use_sim_time_argument = DeclareLaunchArgument(
         'use_sim_time',

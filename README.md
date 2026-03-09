@@ -16,7 +16,7 @@ ros2 launch echo_bringup amcl_localization.launch.py map:=src/echo_gazebo/maps/m
 ```
 -Rviz2 with markers 
 ```
-rviz2 -d src/zulu_gazebo/worlds/maps.rviz 
+rviz2 -d src/echo_gazebo/worlds/maps.rviz 
 ```
 
 -BIT* Pathfinding

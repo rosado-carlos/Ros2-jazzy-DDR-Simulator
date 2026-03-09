@@ -327,9 +327,9 @@ class BITStarNode(Node):
         marker.scale.x = 0.02
 
         marker.color.r = 0.0
-        marker.color.g = 1.0
+        marker.color.g = 0.7
         marker.color.b = 0.0
-        marker.color.a = 1.0
+        marker.color.a = 0.3
 
         for v1, v2 in planner.E:
 

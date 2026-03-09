@@ -923,17 +923,17 @@ class BITStarPlannerNode(Node):
         self.declare_parameter("frame_id", "map")
 
         # Environment and robot
-        self.declare_parameter("robot_radius", 0.20)
-        self.declare_parameter("occupancy_threshold", 50)
+        self.declare_parameter("robot_radius", 0.25)
+        self.declare_parameter("occupancy_threshold", 90)
         self.declare_parameter("unknown_is_occupied", True)
 
         # BIT*
-        self.declare_parameter("batch_size", 180)
+        self.declare_parameter("batch_size", 200)
         self.declare_parameter("max_iterations", 4000)
         self.declare_parameter("max_planning_time", 2.5)
-        self.declare_parameter("eta_radius", 1.1)
+        self.declare_parameter("eta_radius", 1.8)
         self.declare_parameter("min_connection_radius", 0.4)
-        self.declare_parameter("max_connection_radius", 2.5)
+        self.declare_parameter("max_connection_radius", 2.0)
         self.declare_parameter("goal_tolerance_xy", 0.25)
         self.declare_parameter("goal_tolerance_yaw", 0.25)
         self.declare_parameter("sample_yaw_weight", 0.25)

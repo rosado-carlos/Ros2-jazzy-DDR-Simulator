@@ -33,7 +33,7 @@ class DijkstraNode(Node):
         self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
 
         # Publishers
-        self.path_pub = self.create_publisher(Path, '/dijkstra_path', map_qos)
+        self.path_pub = self.create_publisher(Path, '/planned_path', map_qos)
 
         # tf2 listener
         self.tf_buffer = tf2_ros.Buffer()

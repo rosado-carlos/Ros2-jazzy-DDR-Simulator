@@ -55,9 +55,7 @@ def generate_launch_description():
             {"use_sim_time": use_sim_time},
         ],
         remappings=[
-            # Uncomment if your topics differ:
-            # ("/wheel/odom", "/your_wheel_odom"),
-            # ("/imu/data", "/your_imu_topic"),
+          #  ("/ekf/odometry", "/odom"),
         ],
     )
 

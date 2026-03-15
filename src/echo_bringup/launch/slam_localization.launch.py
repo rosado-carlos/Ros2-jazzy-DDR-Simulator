@@ -3,7 +3,6 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import Node
 from launch.actions import (DeclareLaunchArgument, EmitEvent, LogInfo,
                             RegisterEventHandler)
 from launch.conditions import IfCondition
@@ -21,8 +20,9 @@ def generate_launch_description():
     use_lifecycle_manager = LaunchConfiguration("use_lifecycle_manager")
     slam_params_file = LaunchConfiguration('slam_params_file')
     autostart = LaunchConfiguration('autostart')
-    package_share_dir = get_package_share_directory('echo_gazebo')
-    map_file = os.path.join(package_share_dir, 'maps', 'map2')
+    delta_gazebo_dir = get_package_share_directory('echo_gazebo')
+
+    map_file = os.path.join(delta_gazebo_dir, 'maps', 'map2')
 
     declare_use_sim_time_argument = DeclareLaunchArgument(
         'use_sim_time',
@@ -30,7 +30,7 @@ def generate_launch_description():
         description='Use simulation/Gazebo clock')
     declare_slam_params_file_cmd = DeclareLaunchArgument(
         'slam_params_file',
-        default_value=os.path.join(get_package_share_directory("echo_bringup"),
+        default_value=os.path.join(get_package_share_directory("slam_toolbox"),
                                    'config', 'mapper_params_localization.yaml'),
         description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
     declare_autostart_cmd = DeclareLaunchArgument(
@@ -41,21 +41,22 @@ def generate_launch_description():
         'use_lifecycle_manager', default_value='false',
         description='Enable bond connection during node activation')
 
-    start_localization_slam_toolbox_node = Node(
+    start_localization_slam_toolbox_node = LifecycleNode(
         package='slam_toolbox',
         executable='localization_slam_toolbox_node',
         name='slam_toolbox',
         output='screen',
+        namespace='',
         parameters=[{
-        'use_sim_time': use_sim_time,
-        'mode': 'localization',
-        'map_file_name': map_file,
-        'map_start_pose': [0.0, 0.0, 0.0],
-        'map_frame': 'map',
-        'odom_frame': 'odom',
-        'base_frame': 'base_link',
-        'scan_topic': '/scan',
-        'publish_map': True
+            'use_sim_time': use_sim_time,
+            'mode': 'localization',
+            'map_file_name': map_file,
+            'map_start_pose': [0.0, 0.0, 0.0],
+            'map_frame': 'map',
+            'odom_frame': 'odom',
+            'base_frame': 'base_link',
+            'scan_topic': '/scan',
+            'publish_map': True
     }])
 
     configure_event = EmitEvent(

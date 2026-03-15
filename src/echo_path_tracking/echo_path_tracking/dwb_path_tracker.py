@@ -57,15 +57,15 @@ class SimpleDWBNode(Node):
         self.declare_parameter('max_vel_x', 3.0)
         self.declare_parameter('min_vel_x', 0.00)
         self.declare_parameter('max_vel_theta', 0.80)
-        self.declare_parameter('acc_lim_x', 4.0)
-        self.declare_parameter('acc_lim_theta', 3.0)
+        self.declare_parameter('acc_lim_x', 8.0)
+        self.declare_parameter('acc_lim_theta', 1.5)
         self.declare_parameter('allow_reverse', False)
         self.declare_parameter('robot_radius', 0.20)
 
         # --------------------------------------------------
         # Parameters: local path and rollout
         # --------------------------------------------------
-        self.declare_parameter('horizon_length', 2.0)
+        self.declare_parameter('horizon_length', 1.0)
         self.declare_parameter('behind_margin', 0.10)
         self.declare_parameter('path_stride', 1)
         self.declare_parameter('sim_time', 1.0)
@@ -78,7 +78,7 @@ class SimpleDWBNode(Node):
         # --------------------------------------------------
         self.declare_parameter('scan_stride', 4)
         self.declare_parameter('max_obstacle_points', 180)
-        self.declare_parameter('min_obstacle_dist', 0.20)
+        self.declare_parameter('min_obstacle_dist', 0.15)
         self.declare_parameter('obstacle_influence_dist', 0.80)
         self.declare_parameter('w_path', 6.0)
         self.declare_parameter('w_goal', 2.0)

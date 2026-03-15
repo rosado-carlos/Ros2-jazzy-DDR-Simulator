@@ -32,7 +32,7 @@ setup(
             'bitstar_planner_node=echo_path_planner.bitstar_planner_node:main',
             'map_waypoint_mission=echo_path_planner.map_waypoint_mission:main',
             'teb_controller_node=echo_path_planner.teb_controller_node:main',
-            'dwb_path_tracker=echo_path_planner.dwb_path_tracker:main',
+            'ara_path_planner=echo_path_planner.ara_path_planner:main',
         ],
     },
 )

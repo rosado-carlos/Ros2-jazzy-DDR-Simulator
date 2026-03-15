@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'pure_pursuit_node=echo_path_tracking.pure_pursuit_node:main',
             'dwb_path_tracker=echo_path_tracking.dwb_path_tracker:main',
+            'stanley_node=echo_path_tracking.stanley_node:main',
         ],
     },
 )

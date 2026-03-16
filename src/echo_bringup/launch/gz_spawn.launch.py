@@ -140,6 +140,11 @@ def generate_launch_description():
             description="Use simulation (Gazebo) clock if true",
         ),
         DeclareLaunchArgument(
+            "gz_mode",
+            default_value="true",
+            description="Run Gazebo with GUI if true, headless if false",
+        ),
+        DeclareLaunchArgument(
             "world",
             default_value=os.path.join(get_package_share_directory(gazebo_pkg_name), "worlds", "RaceTrack.sdf"),
             description="Full path to world SDF file",

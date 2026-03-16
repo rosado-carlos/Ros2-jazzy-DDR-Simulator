@@ -40,7 +40,7 @@ class MissionManager(Node):
         self.mission_active = False
         self.goal_active = False
 
-        self.reach_threshold = 0.4
+        self.reach_threshold = 0.8
 
         thread = threading.Thread(target=self.console_loop)
         thread.daemon = True
@@ -107,7 +107,7 @@ class MissionManager(Node):
             transform = self.tf_buffer.lookup_transform(
                 'map',
                 'base_link',
-                rclpy.time.Time()
+                rclpy.time.Time(seconds=0)
             )
 
         except TransformException as ex:
@@ -139,14 +139,17 @@ class MissionManager(Node):
 
         if dist < self.reach_threshold:
 
-            self.get_logger().info(
-                f"Goal {self.current_goal+1} reached"
-            )
-
             self.current_goal += 1
             self.goal_active = False
 
-            if self.current_goal >= len(self.goals):
+            if self.current_goal < len(self.goals):
+
+                next_goal = self.goals[self.current_goal]
+                self.goal_pub.publish(next_goal)
+
+                self.goal_active = True
+
+            else:
 
                 self.get_logger().info("Mission completed")
                 self.mission_active = False

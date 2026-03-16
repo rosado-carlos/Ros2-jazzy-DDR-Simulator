@@ -3,112 +3,107 @@
 import rclpy
 from rclpy.node import Node
 
-from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import PoseStamped
-
 from tf2_ros import Buffer, TransformListener, TransformException
 
 import math
-from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy, QoSHistoryPolicy
+import threading
 
 
-class MapWaypointMission(Node):
+class MissionManager(Node):
 
     def __init__(self):
 
-        super().__init__('map_waypoint_mission')
-        
-        map_qos = QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-                history=QoSHistoryPolicy.KEEP_LAST,
-                depth=1
-            )
+        super().__init__('mission_manager')
 
-        self.map_sub = self.create_subscription(
-            OccupancyGrid,
-            '/map',
-            self.map_callback,
-            map_qos
+        self.goal_sub = self.create_subscription(
+            PoseStamped,
+            '/goal_pose',
+            self.goal_callback,
+            10
         )
 
         self.goal_pub = self.create_publisher(
             PoseStamped,
-            '/goal_pose',
+            '/mission_goal',
             10
         )
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.timer = self.create_timer(
-            1.0,
-            self.timer_callback
-        )
+        self.timer = self.create_timer(0.5, self.timer_callback)
 
-        self.map = None
-        self.waypoints = []
-        self.current_wp = 0
+        self.goals = []
+        self.current_goal = 0
 
-        self.reach_threshold = 0.5
-        self.step_cells = 50
-
+        self.mission_active = False
         self.goal_active = False
 
-        self.get_logger().info("Waypoint mission node ready")
+        self.reach_threshold = 0.4
 
-    def map_callback(self, msg):
+        thread = threading.Thread(target=self.console_loop)
+        thread.daemon = True
+        thread.start()
 
-        if self.map is not None:
+        self.get_logger().info("Mission manager ready")
+        self.get_logger().info("Use RViz to set goals")
+        self.get_logger().info("Type 'start' to begin mission")
+
+    def goal_callback(self, msg):
+
+        if self.mission_active:
             return
 
-        self.get_logger().info("Map recieved")
-
-        self.map = msg
-
-        self.generate_waypoints()
-
-    def generate_waypoints(self):
-
-        width = self.map.info.width
-        height = self.map.info.height
-        res = self.map.info.resolution
-
-        origin_x = self.map.info.origin.position.x
-        origin_y = self.map.info.origin.position.y
-
-        step = self.step_cells
-
-        for j in range(0, height, step):
-
-            row_points = []
-
-            for i in range(0, width, step):
-
-                idx = j * width + i
-
-                if self.map.data[idx] == 0:
-
-                    x = origin_x + (i * res)
-                    y = origin_y + (j * res)
-
-                    row_points.append((x, y))
-
-            if (j // step) % 2 == 0:
-                self.waypoints.extend(row_points)
-            else:
-                self.waypoints.extend(reversed(row_points))
+        self.goals.append(msg)
 
         self.get_logger().info(
-            f"Generated {len(self.waypoints)} waypoints"
+            f"Goal stored ({len(self.goals)})"
         )
+
+    def console_loop(self):
+
+        while rclpy.ok():
+
+            cmd = input()
+
+            if cmd == "start":
+
+                if not self.goals:
+                    print("No goals stored")
+                    continue
+
+                try:
+                    n = int(input("How many laps?: "))
+                except:
+                    print("Invalid number")
+                    continue
+
+                # duplicar metas
+                self.goals = self.goals * n
+
+                self.mission_active = True
+                self.current_goal = 0
+                self.goal_active = False
+
+                print(f"Mission started ({len(self.goals)} goals)")
+
+            elif cmd == "list":
+
+                print(self.goals)
+
+            elif cmd == "clear":
+
+                self.goals.clear()
+                print("Goals cleared")
 
     def timer_callback(self):
 
-        if not self.waypoints:
+        if not self.mission_active:
             return
 
         try:
+
             transform = self.tf_buffer.lookup_transform(
                 'map',
                 'base_link',
@@ -117,66 +112,57 @@ class MapWaypointMission(Node):
 
         except TransformException as ex:
 
-            self.get_logger().warn(f"TF error: {ex}")
+            self.get_logger().warn(str(ex))
             return
 
         rx = transform.transform.translation.x
         ry = transform.transform.translation.y
 
-        if self.current_wp >= len(self.waypoints):
+        goal = self.goals[self.current_goal]
 
-            self.get_logger().info("Mission completed")
-            return
+        gx = goal.pose.position.x
+        gy = goal.pose.position.y
 
-        wx, wy = self.waypoints[self.current_wp]
-
-        dist = math.sqrt((wx - rx)**2 + (wy - ry)**2)
+        dist = math.sqrt((gx - rx)**2 + (gy - ry)**2)
 
         if not self.goal_active:
 
-            self.send_goal(wx, wy)
+            self.goal_pub.publish(goal)
+
             self.goal_active = True
+
+            self.get_logger().info(
+                f"Sending goal {self.current_goal+1}"
+            )
+
             return
 
         if dist < self.reach_threshold:
 
             self.get_logger().info(
-                f"Waypoint {self.current_wp} reached"
+                f"Goal {self.current_goal+1} reached"
             )
 
-            self.current_wp += 1
+            self.current_goal += 1
             self.goal_active = False
 
-    def send_goal(self, x, y):
+            if self.current_goal >= len(self.goals):
 
-        goal = PoseStamped()
-
-        goal.header.frame_id = "map"
-        goal.header.stamp = self.get_clock().now().to_msg()
-
-        goal.pose.position.x = x
-        goal.pose.position.y = y
-        goal.pose.orientation.w = 1.0
-
-        self.goal_pub.publish(goal)
-
-        self.get_logger().info(
-            f"Sending waypoint {self.current_wp}: {x:.2f}, {y:.2f}"
-        )
+                self.get_logger().info("Mission completed")
+                self.mission_active = False
 
 
-def main(args=None):
+def main():
 
-    rclpy.init(args=args)
+    rclpy.init()
 
-    node = MapWaypointMission()
+    node = MissionManager()
 
     rclpy.spin(node)
 
     node.destroy_node()
-
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

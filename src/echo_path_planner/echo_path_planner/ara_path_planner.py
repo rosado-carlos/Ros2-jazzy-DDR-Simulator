@@ -50,6 +50,7 @@ class ARAPlannerNode(Node):
 
         # --- Parámetros de ROS 2 (Reciclados de Dijkstra) ---
         self.declare_parameter('topics.map_topic', '/map')
+        self.declare_parameter('goal_source', 'mission')
         self.declare_parameter('topics.goal_topic', '/goal_pose')
         self.declare_parameter('topics.path_topic', '/planned_path')
         self.declare_parameter('plan_service', '/get_plan')
@@ -61,7 +62,7 @@ class ARAPlannerNode(Node):
         # Opciones de grilla
         self.declare_parameter('geometry.occupied_threshold', 65)
         self.declare_parameter('geometry.use_8_connected', True)
-        self.declare_parameter('geometry.inflate_radius', 0.5)
+        self.declare_parameter('geometry.inflate_radius', 0.4)
         self.declare_parameter('geometry.treat_unknown_as_obstacle', True)
 
         # --- Parámetros NUEVOS para ARA* ---
@@ -87,8 +88,21 @@ class ARAPlannerNode(Node):
         path_topic = self.get_parameter('topics.path_topic').get_parameter_value().string_value
         debug_topic = self.get_parameter('topics.debug_paths').get_parameter_value().string_value
         plan_srv_name = self.get_parameter('plan_service').get_parameter_value().string_value
+        self.goal_source = self.get_parameter('goal_source').value
 
-        self.goal_sub = self.create_subscription(PoseStamped, goal_topic, self.goal_cb, 10)
+        self.goal_rviz_sub = self.create_subscription(
+            PoseStamped,
+            '/goal_pose',
+            self.goal_rviz_cb,
+            10
+        )
+
+        self.goal_mission_sub = self.create_subscription(
+            PoseStamped,
+            '/mission_goal',
+            self.goal_mission_cb,
+            10
+        )
         self.path_pub = self.create_publisher(Path, path_topic, 10)
         self.debug_paths_pub = self.create_publisher(MarkerArray, debug_topic, 10)
         self.plan_srv = self.create_service(GetPlan, plan_srv_name, self.get_plan_cb)
@@ -186,38 +200,65 @@ class ARAPlannerNode(Node):
                     q.append((nx, ny))
         return dist
 
-    def goal_cb(self, msg: PoseStamped):
-        """Se activa al recibir una meta en RViz. Aquí arranca el ARA*."""
+    def goal_rviz_cb(self, msg):
+
+        if self.goal_source != "rviz":
+            return
+
+        self.get_logger().info("Goal received from RViz")
+
+        self.process_goal(msg)
+
+
+    def goal_mission_cb(self, msg):
+
+        if self.goal_source != "mission":
+            return
+
+        self.get_logger().info("Goal received from mission manager")
+
+        self.process_goal(msg)
+    def process_goal(self, msg: PoseStamped):
+
         if self._map is None or self._obstacles is None:
             self.get_logger().warn("No hay mapa todavía.")
             return
 
-        # 1. Obtener la posición actual del robot (Start)
         try:
+
             transform = self.tf_buffer.lookup_transform(
-                self.get_parameter('frames.global_frame').value,
-                self.get_parameter('frames.base_frame').value,
-                rclpy.time.Time()
+                self.get_parameter('frames.global_frame').get_parameter_value().string_value,
+                self.get_parameter('frames.base_frame').get_parameter_value().string_value,
+                rclpy.time.Time(seconds=0)
             )
-            # Crear PoseStamped temporal para el inicio
+
             start_pose = PoseStamped()
-            start_pose.header.frame_id = self.get_parameter('frames.global_frame').value
+            start_pose.header.frame_id = self.get_parameter(
+                'frames.global_frame'
+            ).get_parameter_value().string_value
+
+            start_pose.header.stamp = self.get_clock().now().to_msg()
+
             start_pose.pose.position.x = transform.transform.translation.x
             start_pose.pose.position.y = transform.transform.translation.y
-            
+            start_pose.pose.position.z = 0.0
+            start_pose.pose.orientation.w = 1.0
+
         except Exception as e:
+
             self.get_logger().error(f"Error obteniendo TF: {e}")
             return
 
-        # 2. Llamar al motor matemático del ARA*
         path_msg = self.plan_ara_star(start_pose, msg)
 
-        # 3. Publicar si se encontró una ruta
         if path_msg is not None:
+
             self.path_pub.publish(path_msg)
-            self.get_logger().info("¡Ruta ARA* publicada!")
+            self.get_logger().info("Ruta publicada")
+
         else:
-            self.get_logger().error("ARA* falló al encontrar una ruta.")
+
+            self.get_logger().error("ARA* falló")
     
     def get_plan_cb(self, request, response):
         """

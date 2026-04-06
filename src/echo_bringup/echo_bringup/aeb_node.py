@@ -48,9 +48,9 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         # ---------- subscriptors ----------
         self.scan_sub = self.create_subscription(LaserScan,'/scan',self.scan_callback,10)   
 
-        self.cmdjoy_sub = self.create_subscription(TwistStamped,'/cmd_vel_joy',self.cmd_control_callback,10)
+        self.cmdjoy_sub = self.create_subscription(TwistStamped,'/cmd_vel_joy',self.cmdjoy_callback,10)
 
-        self.cmdjoy_sub = self.create_subscription(TwistStamped,'/cmd_vel_ctrl',self.cmdjoy_callback,10)
+        self.cmdctrl_sub = self.create_subscription(TwistStamped,'/cmd_vel_ctrl',self.cmdctrl_callback,10)
 
         # ---------- publisher ----------
         self.cmd_pub = self.create_publisher(TwistStamped,'/cmd_vel_safe',10)
@@ -108,7 +108,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
     def _forward_Block_(self, joy_msg):     #This block forward motion when forward_Block is latched ON.
 
         if self.forward_Block:      #This means forward movement should be disallowed.
-            if joy_msg.twist.linear.x > 0 or joy_msg.twist.angular.z !=0.0:  #This means user is trying to move forward.
+            if joy_msg.twist.linear.x > 0:  #This means user is trying to move forward.
                 self._stop()    #This apply a stop override to prevent forward motion.
                 self.get_logger().warn("FWD_BLOCK | cmd forward rejected (vx>0). Move back or increase distance.")#This log only when we actively reject a forward command.
             else:   #This means the command is not forward (reverse or zero).
@@ -253,7 +253,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
     def cmdjoy_callback(self, msg):
         self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
     
-    def cmd_control_callback(self, msg):
+    def cmdctrl_callback(self, msg):
         self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
 
 

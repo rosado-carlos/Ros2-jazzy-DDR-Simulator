@@ -3,6 +3,7 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
+from geometry_msgs.msg import Twist
 from geometry_msgs.msg import TwistStamped
 
 class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake) based on LiDAR TTC.
@@ -54,6 +55,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
 
         # ---------- publisher ----------
         self.cmd_pub = self.create_publisher(TwistStamped,'/cmd_vel_safe',10)
+        self.dist_pub = self.create_publisher(Twist,'/dist_min',10)
 
         #Test
         self.d_min = 0.0
@@ -77,6 +79,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         out.twist.linear.x = 0.0
         out.twist.angular.z = 0.0
         self.cmd_pub.publish(out)
+
 
     # --------------------------------------------------
     # TTC computation
@@ -207,7 +210,9 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         vx, dx, self.d_min = self._kin_state_by_lidar(msg)   #This return the estimated ego forward speed vx, the forward sector data dx, and self.d_min.
         ttc_min = self._ttc_calculus(vx, dx)    #This compute the minimum TTC using vx and the forward sector.
         prev_lock = self.lock   #This store previous lock state to detect transitions.
-
+        dist_msg = Twist()
+        dist_msg.linear.x = self.d_min
+        self.dist_pub.publish(dist_msg)
         if self.d_min > 1.3:
             self.ttc_treshold = 0.3*float(self.get_parameter("ttc_threshold").value)
         elif self.d_min > 1:

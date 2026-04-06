@@ -3,10 +3,10 @@ twist_mux:
     use_stamped: true # Set to true if using geometry_msgs/TwistStamped messages
     # Example input topics (adjust as needed)
     topics:
-      navigation:
-        topic   : cmd_vel_nav
-        timeout : 0.5
-        priority: 10
+      # navigation:
+      #   topic   : cmd_vel_nav
+      #   timeout : 0.5
+      #   priority: 10
       joystick  : 
         topic   : cmd_vel_joy
         timeout : 0.5
@@ -14,23 +14,23 @@ twist_mux:
       safety  : 
         topic   : cmd_vel_safe
         timeout : 0.5
-        priority: 200
-      keyboard  : 
-        topic   : cmd_vel_key
-        timeout : 0.5
-        priority: 50
+        priority: 101                                                     
+      # keyboard  : 
+      #   topic   : cmd_vel_key
+      #   timeout : 0.5
+      #   priority: 50
 
-      wall-following control  : 
-        topic   : cmd_vel_ctrl
-        timeout : 0.5
-        priority: 300
+      # wall-following control  : 
+      #   topic   : cmd_vel_ctrl
+      #   timeout : 0.5
+      #   priority: 300
 
-      gap-following control  : 
-        topic   : cmd_vel_gap
-        timeout : 0.5
-        priority: 300
+      # gap-following control  : 
+      #   topic   : cmd_vel_gap
+      #   timeout : 0.5
+      #   priority: 300
 
-      dwb control  : 
-        topic   : cmd_vel_dwb
-        timeout : 0.5
-        priority: 300
+      # dwb control  : 
+      #   topic   : cmd_vel_dwb
+      #   timeout : 0.5
+      #   priority: 300

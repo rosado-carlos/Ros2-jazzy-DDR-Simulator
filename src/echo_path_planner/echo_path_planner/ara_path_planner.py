@@ -60,15 +60,15 @@ class ARAPlannerNode(Node):
         self.declare_parameter('topics.debug_paths', '/ara_debug_paths')  # Nuevo tópico para rutas de depuración
         
         # Opciones de grilla
-        self.declare_parameter('geometry.occupied_threshold', 65)
+        self.declare_parameter('geometry.occupied_threshold', 60)
         self.declare_parameter('geometry.use_8_connected', True)
-        self.declare_parameter('geometry.inflate_radius', 0.4)
+        self.declare_parameter('geometry.inflate_radius', 0.60)
         self.declare_parameter('geometry.treat_unknown_as_obstacle', True)
 
         # --- Parámetros NUEVOS para ARA* ---
-        self.declare_parameter('ara_core.epsilon_start', 2.5)       # Inflación inicial (Modo rápido)
-        self.declare_parameter('ara_core.epsilon_decrease', 0.5)    # Cuánto baja en cada iteración
-        self.declare_parameter('ara_core.time_limit_sec', 0.5)      # Presupuesto de tiempo total
+        self.declare_parameter('ara_core.epsilon_start', 2.8)       # Inflación inicial (Modo rápido)
+        self.declare_parameter('ara_core.epsilon_decrease', 0.7)    # Cuánto baja en cada iteración
+        self.declare_parameter('ara_core.time_limit_sec', 0.6)      # Presupuesto de tiempo total
         self.declare_parameter('ara_core.heuristic_type', 'euclidean')
 
         self.declare_parameter('debug.publish_all_paths', False)

@@ -13,13 +13,13 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
 
         # ---------- parameters ----------
         #This declare ROS parameters with default values (can be changed from launch/CLI).
-        self.declare_parameter("ttc_threshold", 1)
-        self.declare_parameter("min_distance", 0.65)
+        self.declare_parameter("ttc_threshold", 0.5)
+        self.declare_parameter("secure_min_distance", 0.7)
         self.declare_parameter("robot_radius", 0.3)
 
         #This are angle parameters in degrees that will be converted to radians.
         self.declare_parameter("front_angle_deg", 20.0)
-        self.declare_parameter("velocity_sector_deg", 35.0)
+        self.declare_parameter("velocity_sector_deg", 30.0)
 
         #This are thresholds for speed estimation and TTC computation stability.
         self.declare_parameter("min_speed", 0.05)
@@ -32,7 +32,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
 
         # ---------- tresholds ----------
         self.ttc_treshold = float(self.get_parameter("ttc_threshold").value)    #This is the treshold for the minimum ttc.
-        self.min_distance = float(self.get_parameter("min_distance").value)     #This is the treshold for the minimum distance allowed when TTC was activated.
+        self.secure_min_distance = float(self.get_parameter("secure_min_distance").value)     #This is the treshold for the minimum distance allowed when TTC was activated.
 
         # ---- lidar geometry ----------
         self.front_angle = np.deg2rad(float(self.get_parameter("front_angle_deg").value))   #This is the front angle of vision that will be consider for TTC ±front_angle.
@@ -47,7 +47,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         self.prev_stamp = None      #This store the previous stamp in seconds for dt computation.
 
         # ---------- subscriptors ----------
-        self.scan_sub = self.create_subscription(LaserScan,'/scan',self.scan_callback,10)   
+        self.scan_sub = self.create_subscription(LaserScan,'/scan',self.scan_callback,1)   
 
         self.cmdjoy_sub = self.create_subscription(TwistStamped,'/cmd_vel_joy',self.cmdjoy_callback,10)
 
@@ -213,27 +213,29 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         dist_msg = Twist()
         dist_msg.linear.x = self.d_min
         self.dist_pub.publish(dist_msg)
-        if self.d_min > 1.3:
-            self.ttc_treshold = 0.3*float(self.get_parameter("ttc_threshold").value)
-        elif self.d_min > 1:
-            self.ttc_treshold = 0.5*float(self.get_parameter("ttc_threshold").value)
-        elif self.d_min > 0.7:
+        if self.d_min < 2.2 and self.d_min > 2.0:
             self.ttc_treshold = float(self.get_parameter("ttc_threshold").value)
-        elif self.d_min > 0.5:
-            self.ttc_treshold = 1.25*float(self.get_parameter("ttc_threshold").value)
-        else:
-            self.ttc_treshold = 1.7*float(self.get_parameter("ttc_threshold").value)
+        elif self.d_min > 1.5:
+            self.ttc_treshold = 2.5*float(self.get_parameter("ttc_threshold").value)
+        elif self.d_min <= 1.2:
+            self.ttc_treshold = 4.0*float(self.get_parameter("ttc_threshold").value)
 
-        self.lock = (self.d_min <= 1.5) and (ttc_min < self.ttc_treshold)
+        self.lock = (self.d_min <= 2.2) and (ttc_min < self.ttc_treshold)
 
         #This log only on LOCK transitions.
         if self.lock and not prev_lock:
             self.get_logger().warn(
-                f"LOCK ON  | TTCmin={ttc_min:.2f}s < {self.ttc_treshold:.2f}s | "
-                f"vx={vx:.2f} m/s | dmin={self.d_min:.2f} m | "f"min_dist={self.min_distance:.2f} m")   #This is the risk entry log with enough context.
+                "\nLOCK ON\n"
+                "================= LOCK INFO =================\n"
+                f"Closest TTC    : {ttc_min:.2f} s\n"
+                f"Velocity (vx)  : {vx:.2f} m/s\n"
+                f"Distance min   : {self.d_min:.2f} m\n"
+                f"TTC treshold   : {self.ttc_treshold:.2f} s\n"
+                "============================================\n"
+            )   #This is the risk entry log with enough context.
         elif (not self.lock) and prev_lock:
             self.get_logger().info(
-                f"LOCK OFF | TTCmin={ttc_min:.2f}s >= {self.ttc_treshold:.2f}s | "f"vx={vx:.2f} m/s | dmin={self.d_min:.2f} m")      #This is the risk exit log.
+                f"\nLOCK OFF | TTCmin={ttc_min:.2f}s >= {self.ttc_treshold:.2f}s | "f"vx={vx:.2f} m/s | dmin={self.d_min:.2f} m\n")      #This is the risk exit log.
 
         if self.lock:   #This means risk is present by TTC, so we must brake.
             self._stop()
@@ -241,15 +243,17 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         # --- FORWARD_BLOCK transitions ---
         prev_fb = self.forward_Block    #This store previous forward block state to detect transitions.
 
-        if self.lock and (self.d_min < self.min_distance):   #This latch forward_Block ON when we are locked and too close.
+        if self.lock and (self.d_min < self.secure_min_distance):   #This latch forward_Block ON when we are locked and too close.
             self.forward_Block = True
-        elif self.forward_Block and (self.d_min >= self.min_distance):   #This release forward_Block only when distance is safe again.
+        elif self.forward_Block and (self.d_min >= self.secure_min_distance):   #This release forward_Block only when distance is safe again.
             self.forward_Block = False
 
-        if self.forward_Block and not prev_fb:self.get_logger().warn(
-                f"FWD_BLOCK ON  | dmin={self.d_min:.2f} m < {self.min_distance:.2f} m | "f"Reason: too close after TTC lock")    #This indicates the latch is now active.
-        elif (not self.forward_Block) and prev_fb:self.get_logger().info(
-            f"FWD_BLOCK OFF | dmin={self.d_min:.2f} m >= {self.min_distance:.2f} m | "f"Reason: distance recovered")     #This indicates latch released.
+        if self.forward_Block and not prev_fb:
+            self.get_logger().warn(
+                f"\nFWD_BLOCK ON  | dmin={self.d_min:.2f} m < {self.secure_min_distance:.2f} m | "f"Reason: too close after TTC lock")    #This indicates the latch is now active.
+        elif (not self.forward_Block) and prev_fb:
+            self.get_logger().info(
+                f"\nFWD_BLOCK OFF | dmin={self.d_min:.2f} m >= {self.secure_min_distance:.2f} m | "f"Reason: distance recovered")     #This indicates latch released.
 
     # --------------------------------------------------
     # Joystick callback

@@ -13,9 +13,9 @@ class DistFinder(Node):
         super().__init__('dist_finder')
 
         # --- Parameters ---
-        self.declare_parameter('theta_deg', 53.0)
+        self.declare_parameter('theta_deg', 48.0)
         self.declare_parameter('lookahead_dist', 1.5)
-        self.declare_parameter('desired_distance', 0.93)
+        self.declare_parameter('desired_distance', 0.72)
 
         self.theta = math.radians(
             self.get_parameter('theta_deg').value 
@@ -34,6 +34,12 @@ class DistFinder(Node):
         self.error_pub = self.create_publisher(
             Float32,
             '/error',
+            10
+        )
+
+        self.dist_diagiz_pub = self.create_publisher(
+            Float32,
+            '/diagiz_dist',
             10
         )
 
@@ -60,6 +66,8 @@ class DistFinder(Node):
         b = self.getRange(data, - math.pi/2)          # distance at 0°
         a = self.getRange(data, -math.pi/2 + self.theta)  # distance at θ°
 
+        left_upper = self.getRange(data, math.pi/8)
+
         if a == 0.0 or b == 0.0:
             return
 
@@ -81,6 +89,7 @@ class DistFinder(Node):
         msg = Float32()
         msg.data = float(error)
         self.error_pub.publish(msg)
+        self.dist_diagiz_pub.publish(Float32(data=left_upper))
         self.get_logger().info(f"Error: {error: .3f}, Alpha: {math.degrees(alpha): .3f}")
 
 

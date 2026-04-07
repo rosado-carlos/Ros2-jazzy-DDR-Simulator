@@ -16,11 +16,11 @@ class WallFollowerControl(Node):
         # -------- Parameters --------
         self.declare_parameter('kp', 1.1)
         self.declare_parameter('kd', 1.5)
-        self.declare_parameter('max_steering', 100)
+        self.declare_parameter('max_steering', 1.0)
 
-        self.declare_parameter('max_velocity', 2.9)
+        self.declare_parameter('max_velocity', 2.8)
         self.declare_parameter('min_velocity', 0.2)
-        self.declare_parameter('kv', 2.3)  # velocidad adaptativa
+        self.declare_parameter('kv', 2.2)  # velocidad adaptativa
 
         self.kp = self.get_parameter('kp').value
         self.kd = self.get_parameter('kd').value
@@ -34,6 +34,8 @@ class WallFollowerControl(Node):
         self.prev_error = 0.0
         self.prev_time = time.time()
         self.front_yaw = 0.0  # Distancia frontal para detección de obstáculos
+        self.diagiz_state = False  # Estado del sensor diagonal para detección de esquinas
+        self.dist_min = float('inf')  # Distancia mínima frontal
 
         # -------- Subscriber --------
         self.error_sub = self.create_subscription(
@@ -43,7 +45,14 @@ class WallFollowerControl(Node):
             10
         )
 
-        self.error_sub = self.create_subscription(
+        self.dist_diagiz_sub = self.create_subscription(
+            Float32,
+            '/diagiz_dist',
+            self.dist_diagiz_callback,
+            10
+        )
+
+        self.dist_min_sub = self.create_subscription(
             Twist,
             '/dist_min',
             self.front_callback,
@@ -69,6 +78,7 @@ class WallFollowerControl(Node):
             return
 
         error = msg.data
+        self.error = error
 
         # -------- PD Steering --------
         derivative = (error - self.prev_error) / dt
@@ -102,10 +112,14 @@ class WallFollowerControl(Node):
         self.prev_time = current_time
 
     def front_callback(self, msg):
-        if msg.linear.x < 3.1 and msg.linear.y > 1.0:
-            self.front_yaw = 0.4 * msg.linear.y
+        self.dist_min = msg.linear.x
+        if msg.linear.x < 2.5 and msg.linear.y > 1.0 and self.diagiz_state:
+            self.front_yaw = 0.6 * msg.linear.y + 0.5/(msg.linear.x*msg.linear.x)
         else:
             self.front_yaw = 0.0
+    
+    def dist_diagiz_callback(self, msg):
+        self.diagiz_state = msg.data > self.dist_min
 
 def main(args=None):
     rclpy.init(args=args)

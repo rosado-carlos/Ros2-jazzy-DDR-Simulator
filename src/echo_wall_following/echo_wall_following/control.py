@@ -4,6 +4,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32
 from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import Twist
 import time
 
 
@@ -17,7 +18,7 @@ class WallFollowerControl(Node):
         self.declare_parameter('kd', 1.5)
         self.declare_parameter('max_steering', 100)
 
-        self.declare_parameter('max_velocity', 3.5)
+        self.declare_parameter('max_velocity', 2.9)
         self.declare_parameter('min_velocity', 0.2)
         self.declare_parameter('kv', 2.3)  # velocidad adaptativa
 
@@ -32,12 +33,20 @@ class WallFollowerControl(Node):
         # -------- State --------
         self.prev_error = 0.0
         self.prev_time = time.time()
+        self.front_yaw = 0.0  # Distancia frontal para detección de obstáculos
 
         # -------- Subscriber --------
         self.error_sub = self.create_subscription(
             Float32,
             '/error',
             self.error_callback,
+            10
+        )
+
+        self.error_sub = self.create_subscription(
+            Twist,
+            '/dist_min',
+            self.front_callback,
             10
         )
 
@@ -63,7 +72,7 @@ class WallFollowerControl(Node):
 
         # -------- PD Steering --------
         derivative = (error - self.prev_error) / dt
-        steering = self.kp * error + self.kd * derivative
+        steering = self.kp * error + self.kd * derivative + self.front_yaw
 
         # -------- Steering Saturation --------
         if steering > self.max_steering:
@@ -92,6 +101,11 @@ class WallFollowerControl(Node):
         self.prev_error = error
         self.prev_time = current_time
 
+    def front_callback(self, msg):
+        if msg.linear.x < 3.1 and msg.linear.y > 1.0:
+            self.front_yaw = 0.4 * msg.linear.y
+        else:
+            self.front_yaw = 0.0
 
 def main(args=None):
     rclpy.init(args=args)
@@ -99,7 +113,6 @@ def main(args=None):
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

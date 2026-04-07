@@ -13,9 +13,9 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
 
         # ---------- parameters ----------
         #This declare ROS parameters with default values (can be changed from launch/CLI).
-        self.declare_parameter("ttc_threshold", 0.5)
-        self.declare_parameter("secure_min_distance", 0.7)
-        self.declare_parameter("robot_radius", 0.3)
+        self.declare_parameter("ttc_threshold", 0.45)
+        self.declare_parameter("secure_min_distance", 0.8)
+        self.declare_parameter("robot_radius", 0.45)
 
         #This are angle parameters in degrees that will be converted to radians.
         self.declare_parameter("front_angle_deg", 20.0)
@@ -59,6 +59,8 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
 
         #Test
         self.d_min = 0.0
+        self.twist_w = 0.0
+        self.vx_filt = 3.0
 
     # --------------------------------------------------
     # Small helpers for lidar indexing and validation
@@ -77,8 +79,9 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         out.header.stamp = self.get_clock().now().to_msg()
         out.header.frame_id = ""
         out.twist.linear.x = 0.0
-        out.twist.angular.z = 0.0
+        out.twist.angular.z = self.twist_w
         self.cmd_pub.publish(out)
+        self.twist_w = 0.0    #This reset the stored angular command after applying the stop (we only want to block forward, not rotation).
 
 
     # --------------------------------------------------
@@ -109,7 +112,6 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
     # Forward block logic for joystick callback
     # --------------------------------------------------
     def _forward_Block_(self, joy_msg):     #This block forward motion when forward_Block is latched ON.
-
         if self.forward_Block:      #This means forward movement should be disallowed.
             if joy_msg.twist.linear.x > 0:  #This means user is trying to move forward.
                 self._stop()    #This apply a stop override to prevent forward motion.
@@ -208,19 +210,24 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
     def scan_callback(self, msg):
 
         vx, dx, self.d_min = self._kin_state_by_lidar(msg)   #This return the estimated ego forward speed vx, the forward sector data dx, and self.d_min.
+        alpha = 0.2
+        vx_filt_last = self.vx_filt    #This store the last filtered velocity before updating.
+        self.vx_filt = (1 - alpha) * vx_filt_last + alpha * vx    #This apply a simple low-pass filter to the velocity estimate to reduce noise (optional, can be removed if not desired).
+        vx = self.vx_filt    #This use the filtered velocity for TTC computation and decision.
         ttc_min = self._ttc_calculus(vx, dx)    #This compute the minimum TTC using vx and the forward sector.
         prev_lock = self.lock   #This store previous lock state to detect transitions.
         dist_msg = Twist()
         dist_msg.linear.x = self.d_min
+        dist_msg.linear.y = vx
         self.dist_pub.publish(dist_msg)
-        if self.d_min < 2.2 and self.d_min > 2.0:
+        if self.d_min < 1.8 and self.d_min > 1.4:
             self.ttc_treshold = float(self.get_parameter("ttc_threshold").value)
-        elif self.d_min > 1.5:
-            self.ttc_treshold = 2.5*float(self.get_parameter("ttc_threshold").value)
-        elif self.d_min <= 1.2:
+        elif self.d_min > 1.2:
+            self.ttc_treshold = 1.9*float(self.get_parameter("ttc_threshold").value)
+        elif self.d_min <= 0.8:
             self.ttc_treshold = 4.0*float(self.get_parameter("ttc_threshold").value)
 
-        self.lock = (self.d_min <= 2.2) and (ttc_min < self.ttc_treshold)
+        self.lock = (self.d_min <= 1.8) and (ttc_min < self.ttc_treshold)
 
         #This log only on LOCK transitions.
         if self.lock and not prev_lock:
@@ -260,9 +267,11 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
     # --------------------------------------------------
 
     def cmdjoy_callback(self, msg):
+        self.twist_w = msg.twist.angular.z
         self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
     
     def cmdctrl_callback(self, msg):
+        self.twist_w = msg.twist.angular.z
         self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
 
 

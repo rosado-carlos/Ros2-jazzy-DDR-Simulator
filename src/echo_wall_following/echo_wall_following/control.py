@@ -5,6 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float32
 from geometry_msgs.msg import TwistStamped
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Joy
 import time
 
 
@@ -16,11 +17,11 @@ class WallFollowerControl(Node):
         # -------- Parameters --------
         self.declare_parameter('kp', 1.1)
         self.declare_parameter('kd', 1.5)
-        self.declare_parameter('max_steering', 1.0)
+        self.declare_parameter('max_steering', 3.0)  # Límite de dirección
 
-        self.declare_parameter('max_velocity', 2.8)
-        self.declare_parameter('min_velocity', 0.2)
-        self.declare_parameter('kv', 2.2)  # velocidad adaptativa
+        self.declare_parameter('max_velocity', 1.7)
+        self.declare_parameter('min_velocity', 1.33)
+        self.declare_parameter('kv', 2.1)  # velocidad adaptativa
 
         self.kp = self.get_parameter('kp').value
         self.kd = self.get_parameter('kd').value
@@ -36,6 +37,7 @@ class WallFollowerControl(Node):
         self.front_yaw = 0.0  # Distancia frontal para detección de obstáculos
         self.diagiz_state = False  # Estado del sensor diagonal para detección de esquinas
         self.dist_min = float('inf')  # Distancia mínima frontal
+        self.rb_pressed = False  # Estado del botón RB del joystick
 
         # -------- Subscriber --------
         self.error_sub = self.create_subscription(
@@ -56,6 +58,13 @@ class WallFollowerControl(Node):
             Twist,
             '/dist_min',
             self.front_callback,
+            10
+        )
+
+        self.joy_sub = self.create_subscription(
+            Joy,
+            '/joy',
+            self.joy_callback,
             10
         )
 
@@ -100,7 +109,9 @@ class WallFollowerControl(Node):
         cmd = TwistStamped()
         cmd.header.stamp = self.get_clock().now().to_msg()
         cmd.header.frame_id = "base_link"
-
+        if(not self.rb_pressed):
+                velocity = 0.0
+                steering = 0.0
         cmd.twist.linear.x = velocity
         cmd.twist.angular.z = steering
 
@@ -120,6 +131,13 @@ class WallFollowerControl(Node):
     
     def dist_diagiz_callback(self, msg):
         self.diagiz_state = msg.data > self.dist_min
+
+    def joy_callback(self, msg):
+        # Handle joystick messages if needed
+        self.rb_pressed = (msg.buttons[5] == 1)
+        if not self.rb_pressed:
+            self.get_logger().info("Dead man activado")
+        
 
 def main(args=None):
     rclpy.init(args=args)

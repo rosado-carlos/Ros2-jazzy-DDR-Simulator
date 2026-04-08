@@ -8,8 +8,6 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.conditions import IfCondition, UnlessCondition
 
-import xacro
-
 def generate_launch_description():
 
     bringup_pkg_name = "echo_bringup"
@@ -34,7 +32,7 @@ def generate_launch_description():
     twist_mux_node = Node(package='twist_mux', 
                     executable='twist_mux',
                     parameters=[twist_mux_params,{'use_sim_time': False}],
-                    remappings=[('/cmd_vel_out','/cmd_vel')]
+                    remappings=[('/cmd_vel_out','/cmd_vel_out')]
     )
 
     aeb_node = Node(

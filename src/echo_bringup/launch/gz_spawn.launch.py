@@ -17,6 +17,12 @@ def generate_launch_description():
 
     use_sim_time = LaunchConfiguration("use_sim_time")
     world = LaunchConfiguration("world")
+    x_pose = LaunchConfiguration("x_pose")
+    y_pose = LaunchConfiguration("y_pose")
+    z_pose = LaunchConfiguration("z_pose")
+    roll = LaunchConfiguration("roll")
+    pitch = LaunchConfiguration("pitch")
+    yaw = LaunchConfiguration("yaw")
 
     # --- Robot description (xacro -> URDF XML string) ---
     xacro_file = os.path.join(get_package_share_directory(description_pkg_name), "diffdrive_urdf", "robot.urdf.xacro")
@@ -64,7 +70,12 @@ def generate_launch_description():
         arguments=[
             "-name", "diffbot",
             "-topic", "robot_description",
-            "-x", "0.0", "-y", "0.0", "-z", "0.5", "-R", "0", "-P", "0", "-Y", "0.0"
+            "-x", x_pose,
+            "-y", y_pose,
+            "-z", z_pose,
+            "-R", roll,
+            "-P", pitch,
+            "-Y", yaw
         ],
     )
    
@@ -149,6 +160,12 @@ def generate_launch_description():
             default_value=os.path.join(get_package_share_directory(gazebo_pkg_name), "worlds", "RaceTrack.sdf"),
             description="Full path to world SDF file",
         ),
+        DeclareLaunchArgument("x_pose", default_value="0.0"),
+        DeclareLaunchArgument("y_pose", default_value="0.0"),
+        DeclareLaunchArgument("z_pose", default_value="0.5"),
+        DeclareLaunchArgument("roll", default_value="0.0"),
+        DeclareLaunchArgument("pitch", default_value="0.0"),
+        DeclareLaunchArgument("yaw", default_value="0.0"),
         gz_launch,
         gz_headless_launch,
         rsp,

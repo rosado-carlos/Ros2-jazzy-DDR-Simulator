@@ -133,6 +133,12 @@ def generate_launch_description():
         output='screen'
     )
 
+    lidar_data = Node(
+        package=bringup_pkg_name,
+        executable='lidar_data',
+        output='screen'
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             "use_sim_time",
@@ -160,5 +166,6 @@ def generate_launch_description():
         joy_node,
         teleop_node,
         twist_mux_node,
+        lidar_data,
         aeb_node,
     ])

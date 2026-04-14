@@ -30,7 +30,8 @@ setup(
         'console_scripts': [
             'twist_key_to_stamped=echo_bringup.twist_key_to_stamped:main',
             'aeb_node=echo_bringup.aeb_node:main',
-            'lidar_data=echo_bringup.lidar_data:main'
+            'lidar_data=echo_bringup.lidar_data:main',
+            'cmd_scaler=echo_bringup.cmd_scaler:main'
         ],
     },
 )

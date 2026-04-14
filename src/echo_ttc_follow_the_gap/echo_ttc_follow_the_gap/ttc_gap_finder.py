@@ -1,137 +1,138 @@
 #!/usr/bin/env python3
-
 import math
+import numpy as np
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float32
 
 
-class TTCGapFinder(Node):
-
+class FollowGapFinder(Node):
     def __init__(self):
         super().__init__('ttc_gap_finder')
 
-        self.declare_parameter('bubble_radius', 1.1)
-        self.declare_parameter('fov_deg', 100.0)
-        self.declare_parameter('v_forward', 0.5)
+        # -------- PARÁMETROS ROS (leídos desde launch) --------
+        self.declare_parameter('ttc_min',       0.6)
+        self.declare_parameter('fov_deg',      100.0)
+        self.declare_parameter('bubble_base',   0.35)
+        self.declare_parameter('bubble_vel_k',  0.4)
+        self.declare_parameter('min_clearance', 0.40)  # distancia mínima a pared (m)
+        self.declare_parameter('smooth_alpha',  0.40)  # ↓ más responsivo (era 0.7)
 
-        self.bubble_radius = self.get_parameter('bubble_radius').value
-        self.fov = math.radians(self.get_parameter('fov_deg').value)
-        self.v = self.get_parameter('v_forward').value
+        self.ttc_threshold = self.get_parameter('ttc_min').value
+        self.fov           = math.radians(self.get_parameter('fov_deg').value)
+        self.bubble_base   = self.get_parameter('bubble_base').value
+        self.bubble_vel_k  = self.get_parameter('bubble_vel_k').value
+        self.min_clearance = self.get_parameter('min_clearance').value
+        self.alpha         = self.get_parameter('smooth_alpha').value
+        self.min_range     = 0.05
 
-        self.scan_sub = self.create_subscription(
-            LaserScan,
-            '/scan',
-            self.scan_callback,
-            10
+        # -------- SUBS --------
+        self.create_subscription(LaserScan, '/scan',     self.scan_callback, 10)
+        self.create_subscription(Float32,  '/lidar/vx', self.vx_callback,   10)
+
+        # -------- PUBS --------
+        self.pub_angle = self.create_publisher(Float32, '/gap_angle', 10)
+        self.pub_ttc   = self.create_publisher(Float32, '/min_ttc',   10)
+
+        # -------- ESTADO --------
+        self.vx         = 0.0
+        self.prev_angle = 0.0
+
+        self.get_logger().info(
+            f"GapFinder OK | ttc_min={self.ttc_threshold} "
+            f"clearance={self.min_clearance} alpha={self.alpha}"
         )
 
-        self.gap_pub = self.create_publisher(Float32, '/gap_angle', 10)
-        self.ttc_pub = self.create_publisher(Float32, '/min_ttc', 10)
+    # -------------------------------------------------------
+    def vx_callback(self, msg: Float32):
+        self.vx = msg.data
 
-    # --------------------------------------------------
-    def compute_ttc(self, distance, angle):
-        relative_velocity = self.v * math.cos(angle)
+    # -------------------------------------------------------
+    def scan_callback(self, msg: LaserScan):
+        vx = max(self.vx, 0.05)
 
-        if relative_velocity <= 0.0:
-            return float('inf')
+        ranges = np.array(msg.ranges, dtype=float)
+        angles = msg.angle_min + np.arange(len(ranges)) * msg.angle_increment
 
-        return distance / relative_velocity
+        # -------- LIMPIEZA --------
+        ranges = np.where(np.isfinite(ranges), ranges, msg.range_max)
+        ranges = np.clip(ranges, self.min_range, msg.range_max)
 
-    # --------------------------------------------------
-    def scan_callback(self, scan):
+        # -------- FOV --------
+        fov_mask = np.abs(angles) <= self.fov
+        ranges   = np.where(fov_mask, ranges, 0.0)
 
-        ranges = list(scan.ranges)
-        min_ttc = float('inf')
+        # -------- TTC  (ANTES del bubble, solo rangos válidos) --------
+        safe_r      = np.where(ranges > self.min_range, ranges, np.inf)
+        projections = vx * np.cos(angles)
+        ttc         = np.where(projections > 0.0, safe_r / projections, np.inf)
+        min_ttc     = float(np.min(ttc))
 
-        # -------- LIMIT FOV --------
-        for i in range(len(ranges)):
-            angle = scan.angle_min + i * scan.angle_increment
-            if abs(angle) > self.fov:
-                ranges[i] = 0.0
+        # -------- BUBBLE MÚLTIPLE ----------------------------------------
+        # Itera sobre TODOS los puntos dentro del radio de clearance,
+        # no solo el más cercano → elimina secciones enteras de pared.
+        bubble_radius = self.bubble_base + self.bubble_vel_k * vx
+        close_mask    = (ranges > self.min_range) & (ranges < bubble_radius)
 
-        # -------- FIND CLOSEST POINT --------
-        min_distance = float('inf')
-        closest_index = 0
+        for idx in np.where(close_mask)[0]:
+            dist   = ranges[idx]
+            b_ang  = math.atan2(bubble_radius, max(dist, 1e-3))
+            b_half = int(b_ang / msg.angle_increment)
+            b_s    = max(0,           idx - b_half)
+            b_e    = min(len(ranges), idx + b_half)
+            ranges[b_s:b_e] = 0.0
 
-        for i, r in enumerate(ranges):
-            if r > 0.0 and r < min_distance:
-                min_distance = r
-                closest_index = i
+        # -------- SAFE MASK -----------------------------------------------
+        # TTC cubre amenazas frontales.
+        # min_clearance cubre paredes laterales (cos≈0 → TTC=∞ pero siguen peligrosas).
+        forward_w = np.cos(angles)
+        ttc_dyn   = self.ttc_threshold * (0.5 + 0.5 * forward_w)
+        safe_mask = (
+            (ttc    > ttc_dyn)           &  # seguridad temporal
+            (ranges > self.min_clearance)   # seguridad espacial
+        )
 
-        # -------- CREATE BUBBLE --------
-        if min_distance < float('inf'):
+        # -------- GAPS --------
+        gaps = self._find_gaps(safe_mask)
 
-            bubble_angle = math.atan2(self.bubble_radius, min_distance)
-            bubble_size = int(bubble_angle / scan.angle_increment)
-
-            start = max(0, closest_index - bubble_size)
-            end = min(len(ranges), closest_index + bubble_size)
-
-            for i in range(start, end):
-                ranges[i] = 0.0
-
-        # -------- FIND LARGEST GAP --------
-        max_gap_start = 0
-        max_gap_size = 0
-        current_start = None
-        current_size = 0
-
-        for i, r in enumerate(ranges):
-
-            if r > 0.0:
-                if current_start is None:
-                    current_start = i
-                    current_size = 1
-                else:
-                    current_size += 1
-            else:
-                if current_size > max_gap_size:
-                    max_gap_size = current_size
-                    max_gap_start = current_start
-                current_start = None
-                current_size = 0
-
-        if current_size > max_gap_size:
-            max_gap_size = current_size
-            max_gap_start = current_start
-
-        # -------- SELECT FARTHEST POINT --------
-        # -------- SELECT CENTER OF GAP --------
-        if max_gap_size > 0:
-
-            best_index = max_gap_start + max_gap_size // 2
-            gap_angle = scan.angle_min + best_index * scan.angle_increment
-
-
+        if not gaps:
+            self.get_logger().warn("Sin gaps → fallback frontal")
+            best_angle = 0.0
         else:
-            gap_angle = 0.0
+            best_gap       = max(gaps, key=lambda g: g[1] - g[0])
+            gs, ge         = best_gap
+            gap_ranges     = ranges[gs:ge + 1]
+            gap_angles     = angles[gs:ge + 1]
+            score          = gap_ranges * np.cos(gap_angles)
+            best_angle     = float(angles[gs + int(np.argmax(score))])
 
-        # -------- COMPUTE MIN TTC --------
-        for i, r in enumerate(scan.ranges):
-            angle = scan.angle_min + i * scan.angle_increment
-            if r > 0.0:
-                ttc = self.compute_ttc(r, angle)
-                min_ttc = min(min_ttc, ttc)
+        # -------- SUAVIZADO --------
+        best_angle      = self.alpha * self.prev_angle + (1.0 - self.alpha) * best_angle
+        self.prev_angle = best_angle
 
-        # -------- PUBLISH --------
-        gap_msg = Float32()
-        gap_msg.data = float(gap_angle)
-        self.gap_pub.publish(gap_msg)
+        # -------- PUBLICAR --------
+        a = Float32(); a.data = best_angle; self.pub_angle.publish(a)
+        t = Float32(); t.data = min_ttc;    self.pub_ttc.publish(t)
 
-        ttc_msg = Float32()
-        ttc_msg.data = float(min_ttc)
-        self.ttc_pub.publish(ttc_msg)
+    # -------------------------------------------------------
+    def _find_gaps(self, mask):
+        gaps, start = [], None
+        for i, v in enumerate(mask):
+            if v and start is None:
+                start = i
+            elif not v and start is not None:
+                gaps.append((start, i - 1)); start = None
+        if start is not None:
+            gaps.append((start, len(mask) - 1))
+        return gaps
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = TTCGapFinder()
-    rclpy.spin(node)
-    node.destroy_node()
+    rclpy.spin(FollowGapFinder())
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

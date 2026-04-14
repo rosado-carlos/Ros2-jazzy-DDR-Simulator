@@ -5,6 +5,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import TwistStamped
+from std_msgs.msg import Float32
 
 class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake) based on LiDAR TTC.
 
@@ -56,6 +57,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         # ---------- publisher ----------
         self.cmd_pub = self.create_publisher(TwistStamped,'/cmd_vel_safe',10)
         self.dist_pub = self.create_publisher(Twist,'/dist_min',10)
+        self.vx_pub = self.create_publisher(Float32, '/lidar/vx', 10)
 
         #Test
         self.d_min = 0.0
@@ -214,6 +216,9 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         vx_filt_last = self.vx_filt    #This store the last filtered velocity before updating.
         self.vx_filt = (1 - alpha) * vx_filt_last + alpha * vx    #This apply a simple low-pass filter to the velocity estimate to reduce noise (optional, can be removed if not desired).
         vx = self.vx_filt    #This use the filtered velocity for TTC computation and decision.
+        vx_msg = Float32()
+        vx_msg.data = float(vx)
+        self.vx_pub.publish(vx_msg)
         ttc_min = self._ttc_calculus(vx, dx)    #This compute the minimum TTC using vx and the forward sector.
         prev_lock = self.lock   #This store previous lock state to detect transitions.
         dist_msg = Twist()

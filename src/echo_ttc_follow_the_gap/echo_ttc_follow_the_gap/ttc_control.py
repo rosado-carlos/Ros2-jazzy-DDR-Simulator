@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-
-import math
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32
@@ -8,86 +6,90 @@ from geometry_msgs.msg import TwistStamped
 
 
 class TTCControl(Node):
-
     def __init__(self):
         super().__init__('ttc_control')
 
-        # -------- PARAMETERS --------
-        self.declare_parameter('kp_steering', 3.0)
-        self.declare_parameter('v_max', 0.7)
-        self.declare_parameter('ttc_min', 1.5)
-        self.declare_parameter('max_steering', 2.5)
-        self.declare_parameter('steering_slowdown_gain', 2.0)
+        # -------- PARÁMETROS ROS (leídos desde launch) --------
+        self.declare_parameter('ttc_min',              0.6)
+        self.declare_parameter('v_max',                2.5)
+        self.declare_parameter('v_min',                0.15)   # velocidad mínima garantizada
+        self.declare_parameter('kp_steering',          1.2)
+        self.declare_parameter('max_steering',         2.5)
+        self.declare_parameter('steering_slowdown',    1.5)
+        self.declare_parameter('angle_deadband',       0.05)
 
-        self.kp = self.get_parameter('kp_steering').value
-        self.v_max = self.get_parameter('v_max').value
-        self.ttc_min = self.get_parameter('ttc_min').value
-        self.max_steering = self.get_parameter('max_steering').value
-        self.steering_slowdown_gain = self.get_parameter(
-            'steering_slowdown_gain').value
+        self.ttc_ref        = self.get_parameter('ttc_min').value
+        self.v_max          = self.get_parameter('v_max').value
+        self.v_min          = self.get_parameter('v_min').value
+        self.kp             = self.get_parameter('kp_steering').value
+        self.max_steering   = self.get_parameter('max_steering').value
+        self.slow_gain      = self.get_parameter('steering_slowdown').value
+        self.deadband       = self.get_parameter('angle_deadband').value
 
+        # -------- ESTADO --------
         self.gap_angle = 0.0
-        self.min_ttc = float('inf')
+        self.min_ttc   = float('inf')
 
+        # -------- SUBS --------
         self.create_subscription(Float32, '/gap_angle', self.gap_callback, 10)
-        self.create_subscription(Float32, '/min_ttc', self.ttc_callback, 10)
+        self.create_subscription(Float32, '/min_ttc',   self.ttc_callback, 10)
 
-        self.cmd_pub = self.create_publisher(
-            TwistStamped,
-            '/cmd_vel_gap',
-            10
+        # -------- PUB --------
+        self.cmd_pub = self.create_publisher(TwistStamped, '/cmd_vel_ctrl', 10)
+
+        # -------- TIMER 20 Hz --------
+        self.create_timer(0.05, self.compute_and_publish)
+
+        self.get_logger().info(
+            f"TTCControl OK | v_max={self.v_max} v_min={self.v_min} "
+            f"kp={self.kp} ttc_ref={self.ttc_ref}"
         )
 
-        self.timer = self.create_timer(0.05, self.compute_and_publish)
-
-    # --------------------------------------------------
-    def gap_callback(self, msg):
+    # -------------------------------------------------------
+    def gap_callback(self, msg: Float32):
         self.gap_angle = msg.data
 
-    # --------------------------------------------------
-    def ttc_callback(self, msg):
+    def ttc_callback(self, msg: Float32):
         self.min_ttc = msg.data
 
-    # --------------------------------------------------
+    # -------------------------------------------------------
     def compute_and_publish(self):
 
         # -------- STEERING --------
-        steering = self.kp * self.gap_angle
-        steering = max(-self.max_steering,
-                       min(self.max_steering, steering))
+        angle = self.gap_angle if abs(self.gap_angle) >= self.deadband else 0.0
 
-        # -------- BASE VELOCITY FROM TTC --------
-        if self.min_ttc < self.ttc_min:
-            base_velocity = 0.1
+        steering = self.kp * angle
+        steering = steering / (1.0 + abs(steering))                    # suavizado no lineal → (-1, 1)
+        steering = max(-self.max_steering, min(self.max_steering, steering))
+
+        # -------- VELOCIDAD BASE (TTC) --------
+        if self.min_ttc <= 0.01:
+            scale = 0.0
         else:
-            base_velocity = min(
-                self.v_max,
-                self.v_max * (self.min_ttc / 3.0)
-            )
+            scale = min(self.min_ttc / self.ttc_ref, 1.0)
 
-        # -------- SLOW DOWN WHEN TURNING --------
-        velocity = base_velocity / (
-            1.0 + self.steering_slowdown_gain * abs(steering)
-        )
+        base_vel = self.v_max * scale
 
-        # -------- PUBLISH --------
+        # -------- ACOPLAMIENTO GIRO–VELOCIDAD --------
+        velocity = base_vel / (1.0 + self.slow_gain * abs(steering))
+
+        # -------- VELOCIDAD MÍNIMA GARANTIZADA --------
+        # Colisión gestionada por nodo externo; aquí solo garantizamos avance.
+        velocity = max(self.v_min, velocity)
+
+        # -------- PUBLICAR --------
         cmd = TwistStamped()
-        cmd.header.stamp = self.get_clock().now().to_msg()
+        cmd.header.stamp    = self.get_clock().now().to_msg()
         cmd.header.frame_id = "base_link"
-
-        cmd.twist.linear.x = velocity
-        cmd.twist.angular.z = steering
-
+        cmd.twist.linear.x  = float(velocity)
+        cmd.twist.angular.z = float(steering)
         self.cmd_pub.publish(cmd)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = TTCControl()
-    rclpy.spin(node)
-    node.destroy_node()
+    rclpy.spin(TTCControl())
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

@@ -6,58 +6,56 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    # ---------------- Launch Arguments ----------------
-    ttc_min_arg = DeclareLaunchArgument(
-        'ttc_min',
-        default_value='0.6',
-        description='Minimum TTC threshold'
-    )
+    # -------- ARGUMENTOS --------
+    args = [
+        DeclareLaunchArgument('ttc_min',          default_value='0.6',   description='TTC mínimo (s)'),
+        DeclareLaunchArgument('v_max',             default_value='2.5',   description='Velocidad máxima (m/s)'),
+        DeclareLaunchArgument('v_min',             default_value='0.15',  description='Velocidad mínima garantizada (m/s)'),
+        DeclareLaunchArgument('kp_steering',       default_value='1.2',   description='Ganancia proporcional de steering'),
+        DeclareLaunchArgument('max_steering',      default_value='2.5',   description='Saturación de steering (rad/s)'),
+        DeclareLaunchArgument('steering_slowdown', default_value='1.5',   description='Reducción de vel. en curva'),
+        DeclareLaunchArgument('fov_deg',           default_value='100.0', description='Campo de visión LiDAR (grados)'),
+        DeclareLaunchArgument('bubble_base',       default_value='1.0',  description='Radio base de burbuja (m)'),
+        DeclareLaunchArgument('bubble_vel_k',      default_value='0.1',   description='Ganancia de burbuja por velocidad'),
+        DeclareLaunchArgument('min_clearance',     default_value='0.30',  description='Distancia mínima a paredes (m)'),
+        DeclareLaunchArgument('smooth_alpha',      default_value='0.40',  description='Suavizado de ángulo (0=raw, 1=fijo)'),
+    ]
 
-    v_max_arg = DeclareLaunchArgument(
-        'v_max',
-        default_value='2.5',
-        description='Maximum forward velocity'
-    )
+    cfg = {k: LaunchConfiguration(k) for k in [
+        'ttc_min', 'v_max', 'v_min', 'kp_steering', 'max_steering',
+        'steering_slowdown', 'fov_deg', 'bubble_base', 'bubble_vel_k',
+        'min_clearance', 'smooth_alpha',
+    ]}
 
-    kp_steering_arg = DeclareLaunchArgument(
-        'kp_steering',
-        default_value='1.2',
-        description='Steering proportional gain'
-    )
-
-    # ---------------- Configurations ----------------
-    ttc_min = LaunchConfiguration('ttc_min')
-    v_max = LaunchConfiguration('v_max')
-    kp_steering = LaunchConfiguration('kp_steering')
-
-    # ---------------- Nodes ----------------
+    # -------- NODOS --------
     gap_finder_node = Node(
-        package='echo_ttc_follow_the_gap',
-        executable='ttc_gap_finder',
-        name='ttc_gap_finder',
-        output='screen',
-        parameters=[
-            {'ttc_min': ttc_min}
-        ]
+        package    = 'echo_ttc_follow_the_gap',
+        executable = 'ttc_gap_finder',
+        name       = 'ttc_gap_finder',
+        output     = 'screen',
+        parameters = [{
+            'ttc_min':       cfg['ttc_min'],
+            'fov_deg':       cfg['fov_deg'],
+            'bubble_base':   cfg['bubble_base'],
+            'bubble_vel_k':  cfg['bubble_vel_k'],
+            'min_clearance': cfg['min_clearance'],
+            'smooth_alpha':  cfg['smooth_alpha'],
+        }]
     )
 
     control_node = Node(
-        package='echo_ttc_follow_the_gap',
-        executable='ttc_control',
-        name='ttc_control',
-        output='screen',
-        parameters=[
-            {'ttc_min': ttc_min},
-            {'v_max': v_max},
-            {'kp_steering': kp_steering}
-        ]
+        package    = 'echo_ttc_follow_the_gap',
+        executable = 'ttc_control',
+        name       = 'ttc_control',
+        output     = 'screen',
+        parameters = [{
+            'ttc_min':          cfg['ttc_min'],
+            'v_max':            cfg['v_max'],
+            'v_min':            cfg['v_min'],
+            'kp_steering':      cfg['kp_steering'],
+            'max_steering':     cfg['max_steering'],
+            'steering_slowdown':cfg['steering_slowdown'],
+        }]
     )
 
-    # ---------------- Launch Description ----------------
-    return LaunchDescription([
-        ttc_min_arg,
-        v_max_arg,
-        kp_steering_arg,
-        gap_finder_node,
-        control_node
-    ])
+    return LaunchDescription(args + [gap_finder_node, control_node])

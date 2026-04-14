@@ -14,11 +14,15 @@ class FollowGapFinder(Node):
 
         # -------- PARÁMETROS ROS (leídos desde launch) --------
         self.declare_parameter('ttc_min',       0.6)
-        self.declare_parameter('fov_deg',      100.0)
+        self.declare_parameter('fov_deg',      120.0)
         self.declare_parameter('bubble_base',   0.35)
         self.declare_parameter('bubble_vel_k',  0.4)
         self.declare_parameter('min_clearance', 0.40)  # distancia mínima a pared (m)
         self.declare_parameter('smooth_alpha',  0.40)  # ↓ más responsivo (era 0.7)
+        self.declare_parameter('min_depth_threshold', 1.2)  # <1.2m = probable callejón
+        self.declare_parameter('deadend_weight',      1.8)  # fuerza del rechazo
+        self.min_depth_threshold = self.get_parameter('min_depth_threshold').value
+        self.deadend_weight      = self.get_parameter('deadend_weight').value
 
         self.ttc_threshold = self.get_parameter('ttc_min').value
         self.fov           = math.radians(self.get_parameter('fov_deg').value)
@@ -27,6 +31,9 @@ class FollowGapFinder(Node):
         self.min_clearance = self.get_parameter('min_clearance').value
         self.alpha         = self.get_parameter('smooth_alpha').value
         self.min_range     = 0.05
+        # ... tus declares existentes ...
+        self.no_gap_counter = 0
+        self.search_dir     = 1.0  # 1.0 o -1.0
 
         # -------- SUBS --------
         self.create_subscription(LaserScan, '/scan',     self.scan_callback, 10)
@@ -98,15 +105,15 @@ class FollowGapFinder(Node):
         gaps = self._find_gaps(safe_mask)
 
         if not gaps:
-            self.get_logger().warn("Sin gaps → fallback frontal")
-            best_angle = 0.0
+            self.no_gap_counter += 1
+            # Alterna dirección cada ~0.5s (10 ciclos a 20Hz)
+            if self.no_gap_counter > 20:
+                self.search_dir *= -1.0
+                self.no_gap_counter = 0
+            best_angle = 1.5 * self.search_dir  # ~86° alternados
+            self.get_logger().warn(f"Sin gaps → búsqueda ({best_angle:+.2f} rad)")
         else:
-            best_gap       = max(gaps, key=lambda g: g[1] - g[0])
-            gs, ge         = best_gap
-            gap_ranges     = ranges[gs:ge + 1]
-            gap_angles     = angles[gs:ge + 1]
-            score          = gap_ranges * np.cos(gap_angles)
-            best_angle     = float(angles[gs + int(np.argmax(score))])
+            best_angle = self._score_gaps(gaps, ranges, angles, msg.range_max)
 
         # -------- SUAVIZADO --------
         best_angle      = self.alpha * self.prev_angle + (1.0 - self.alpha) * best_angle
@@ -127,6 +134,37 @@ class FollowGapFinder(Node):
         if start is not None:
             gaps.append((start, len(mask) - 1))
         return gaps
+    
+    def _score_gaps(self, gaps, ranges, angles, range_max):
+        scores = []
+        for gs, ge in gaps:
+            width_idx = ge - gs
+            gap_ranges = ranges[gs:ge+1]
+            
+            # 1. Profundidad mínima (detecta si el hueco se cierra rápido)
+            min_depth = float(np.min(gap_ranges))
+            
+            # 2. Profundidad media (cuánto espacio real hay dentro)
+            avg_depth = float(np.mean(gap_ranges))
+            
+            # 3. Ángulo central
+            center_angle = float(angles[gs + width_idx // 2])
+            
+            # 4. Penalización si es un callejón (poco profundo o se cierra bruscamente)
+            deadend_pen = 0.0
+            if min_depth < self.min_depth_threshold:
+                deadend_pen = self.deadend_weight * (1.0 - min_depth / self.min_depth_threshold)
+            
+            # 5. Puntuación normalizada
+            w_norm = width_idx / len(angles)
+            d_norm = avg_depth / range_max
+            score = (0.4 * w_norm) + (0.4 * d_norm) - deadend_pen
+            
+            scores.append((score, center_angle))
+        
+        # Devuelve el ángulo del gap con mayor puntuación
+        _, best = max(scores, key=lambda x: x[0])
+        return best
 
 
 def main(args=None):

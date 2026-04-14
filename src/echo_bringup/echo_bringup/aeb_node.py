@@ -19,8 +19,8 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         self.declare_parameter("robot_radius", 0.45)
 
         #This are angle parameters in degrees that will be converted to radians.
-        self.declare_parameter("front_angle_deg", 20.0)
-        self.declare_parameter("velocity_sector_deg", 30.0)
+        self.declare_parameter("front_angle_deg", 10.0)
+        self.declare_parameter("velocity_sector_deg", 15.0)
 
         #This are thresholds for speed estimation and TTC computation stability.
         self.declare_parameter("min_speed", 0.05)
@@ -228,11 +228,11 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         if self.d_min < 1.8 and self.d_min > 1.4:
             self.ttc_treshold = float(self.get_parameter("ttc_threshold").value)
         elif self.d_min > 1.2:
-            self.ttc_treshold = 1.9*float(self.get_parameter("ttc_threshold").value)
-        elif self.d_min <= 0.8:
-            self.ttc_treshold = 4.0*float(self.get_parameter("ttc_threshold").value)
+            self.ttc_treshold = float(self.get_parameter("ttc_threshold").value)
+        elif self.d_min <= 0.45:
+            self.ttc_treshold = 7*float(self.get_parameter("ttc_threshold").value)
 
-        self.lock = (self.d_min <= 1.8) and (ttc_min < self.ttc_treshold)
+        self.lock = (self.d_min <= 1.4) and (ttc_min < self.ttc_treshold)
 
         #This log only on LOCK transitions.
         if self.lock and not prev_lock:

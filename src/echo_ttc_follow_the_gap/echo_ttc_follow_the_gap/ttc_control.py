@@ -90,6 +90,7 @@ class TTCControl(Node):
         velocity = max(self.v_min, velocity)
         velocity = min(1.33, velocity)
 
+
         # -------- PUBLICAR --------
         cmd = TwistStamped()
         cmd.header.stamp    = self.get_clock().now().to_msg()

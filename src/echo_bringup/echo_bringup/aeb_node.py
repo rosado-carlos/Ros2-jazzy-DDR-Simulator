@@ -14,7 +14,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
 
         # ---------- parameters ----------
         #This declare ROS parameters with default values (can be changed from launch/CLI).
-        self.declare_parameter("ttc_threshold", 0.45)
+        self.declare_parameter("ttc_threshold", 0.15)
         self.declare_parameter("secure_min_distance", 0.8)
         self.declare_parameter("robot_radius", 0.45)
 
@@ -230,7 +230,7 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         elif self.d_min > 1.2:
             self.ttc_treshold = float(self.get_parameter("ttc_threshold").value)
         elif self.d_min <= 0.45:
-            self.ttc_treshold = 7*float(self.get_parameter("ttc_threshold").value)
+            self.ttc_treshold = 17*float(self.get_parameter("ttc_threshold").value)
 
         self.lock = (self.d_min <= 1.4) and (ttc_min < self.ttc_treshold)
 

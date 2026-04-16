@@ -13,43 +13,48 @@ class FollowGapFinder(Node):
         super().__init__('ttc_gap_finder')
 
         # -------- PARÁMETROS ROS (leídos desde launch) --------
-        self.declare_parameter('ttc_min',       0.6)
-        self.declare_parameter('fov_deg',      120.0)
-        self.declare_parameter('bubble_base',   0.35)
-        self.declare_parameter('bubble_vel_k',  0.4)
-        self.declare_parameter('min_clearance', 0.40)  # distancia mínima a pared (m)
-        self.declare_parameter('smooth_alpha',  0.40)  # ↓ más responsivo (era 0.7)
-        self.declare_parameter('min_depth_threshold', 1.2)  # <1.2m = probable callejón
-        self.declare_parameter('deadend_weight',      1.8)  # fuerza del rechazo
+        self.declare_parameter('ttc_min',           0.6)    # TTC mínimo [s]
+        self.declare_parameter('fov_deg',          120.0)   # Campo de visión [°]
+        self.declare_parameter('bubble_base',       0.35)   # Radio base del bubble [m]
+        self.declare_parameter('bubble_vel_k',      0.4)    # Factor de velocidad para bubble
+        self.declare_parameter('min_clearance',     0.10)   # Distancia mínima a pared [m]
+        self.declare_parameter('smooth_alpha',      0.20)   # Suavizado: ↓ más responsivo
+        self.declare_parameter('min_depth_threshold', 0.7)  # <1.2m = probable callejón
+        self.declare_parameter('deadend_weight',      2.1)  # Fuerza del rechazo de callejones
+        
+        # 🔹 NUEVO: Ancho mínimo de gap aceptable [grados]
+        self.declare_parameter('min_gap_width_deg',  8.0)  # Gaps <12° se ignoran
+        
+        # Cargar parámetros
+        self.ttc_threshold      = self.get_parameter('ttc_min').value
+        self.fov                = math.radians(self.get_parameter('fov_deg').value)
+        self.bubble_base        = self.get_parameter('bubble_base').value
+        self.bubble_vel_k       = self.get_parameter('bubble_vel_k').value
+        self.min_clearance      = self.get_parameter('min_clearance').value
+        self.alpha              = self.get_parameter('smooth_alpha').value
         self.min_depth_threshold = self.get_parameter('min_depth_threshold').value
-        self.deadend_weight      = self.get_parameter('deadend_weight').value
-
-        self.ttc_threshold = self.get_parameter('ttc_min').value
-        self.fov           = math.radians(self.get_parameter('fov_deg').value)
-        self.bubble_base   = self.get_parameter('bubble_base').value
-        self.bubble_vel_k  = self.get_parameter('bubble_vel_k').value
-        self.min_clearance = self.get_parameter('min_clearance').value
-        self.alpha         = self.get_parameter('smooth_alpha').value
-        self.min_range     = 0.05
-        # ... tus declares existentes ...
+        self.deadend_weight     = self.get_parameter('deadend_weight').value
+        self.min_gap_width_deg  = self.get_parameter('min_gap_width_deg').value  # 🔹
+        self.min_range          = 0.05
+        
+        # Estado
         self.no_gap_counter = 0
-        self.search_dir     = 1.0  # 1.0 o -1.0
+        self.search_dir     = 1.0  # 1.0 o -1.0 para búsqueda alternada
+        self.vx             = 0.0
+        self.prev_angle     = 0.0
 
         # -------- SUBS --------
         self.create_subscription(LaserScan, '/scan',     self.scan_callback, 10)
-        self.create_subscription(Float32,  '/lidar/vx', self.vx_callback,   10)
+        self.create_subscription(Float32,  '/lidar/vx',  self.vx_callback,   10)
 
         # -------- PUBS --------
         self.pub_angle = self.create_publisher(Float32, '/gap_angle', 10)
         self.pub_ttc   = self.create_publisher(Float32, '/min_ttc',   10)
 
-        # -------- ESTADO --------
-        self.vx         = 0.0
-        self.prev_angle = 0.0
-
         self.get_logger().info(
             f"GapFinder OK | ttc_min={self.ttc_threshold} "
-            f"clearance={self.min_clearance} alpha={self.alpha}"
+            f"clearance={self.min_clearance} alpha={self.alpha} "
+            f"min_gap_width={self.min_gap_width_deg}°"
         )
 
     # -------------------------------------------------------
@@ -71,15 +76,13 @@ class FollowGapFinder(Node):
         fov_mask = np.abs(angles) <= self.fov
         ranges   = np.where(fov_mask, ranges, 0.0)
 
-        # -------- TTC  (ANTES del bubble, solo rangos válidos) --------
+        # -------- TTC (ANTES del bubble, solo rangos válidos) --------
         safe_r      = np.where(ranges > self.min_range, ranges, np.inf)
         projections = vx * np.cos(angles)
         ttc         = np.where(projections > 0.0, safe_r / projections, np.inf)
         min_ttc     = float(np.min(ttc))
 
         # -------- BUBBLE MÚLTIPLE ----------------------------------------
-        # Itera sobre TODOS los puntos dentro del radio de clearance,
-        # no solo el más cercano → elimina secciones enteras de pared.
         bubble_radius = self.bubble_base + self.bubble_vel_k * vx
         close_mask    = (ranges > self.min_range) & (ranges < bubble_radius)
 
@@ -92,8 +95,6 @@ class FollowGapFinder(Node):
             ranges[b_s:b_e] = 0.0
 
         # -------- SAFE MASK -----------------------------------------------
-        # TTC cubre amenazas frontales.
-        # min_clearance cubre paredes laterales (cos≈0 → TTC=∞ pero siguen peligrosas).
         forward_w = np.cos(angles)
         ttc_dyn   = self.ttc_threshold * (0.5 + 0.5 * forward_w)
         safe_mask = (
@@ -101,19 +102,33 @@ class FollowGapFinder(Node):
             (ranges > self.min_clearance)   # seguridad espacial
         )
 
+        # 🔹 Calcular ancho mínimo en índices (para filtrar gaps pequeños)
+        min_gap_width_idx = max(1, int(
+            math.radians(self.min_gap_width_deg) / msg.angle_increment
+        ))
+
         # -------- GAPS --------
-        gaps = self._find_gaps(safe_mask)
+        gaps = self._find_gaps(safe_mask, min_gap_width_idx)
 
         if not gaps:
             self.no_gap_counter += 1
-            # Alterna dirección cada ~0.5s (10 ciclos a 20Hz)
-            if self.no_gap_counter > 20:
-                self.search_dir *= -1.0
+            # 🔹 FALLBACK MEJORADO: buscar dirección más segura, no alternar ciegamente
+            if self.no_gap_counter > 20:  # ~1s a 20Hz
+                best_fallback = self._find_best_fallback_angle(
+                    ranges, angles, msg.angle_increment, msg.range_max
+                )
+                best_angle = best_fallback if best_fallback is not None else (1.5 * self.search_dir)
+                self.search_dir *= -1.0  # alternar para próxima vez
                 self.no_gap_counter = 0
-            best_angle = 1.5 * self.search_dir  # ~86° alternados
-            self.get_logger().warn(f"Sin gaps → búsqueda ({best_angle:+.2f} rad)")
+                self.get_logger().warn(
+                    f"Sin gaps válidos → fallback ({best_angle:+.2f} rad)"
+                )
+            else:
+                # Mantener último ángulo mientras esperamos
+                best_angle = self.prev_angle
         else:
             best_angle = self._score_gaps(gaps, ranges, angles, msg.range_max)
+            self.no_gap_counter = 0  # resetear contador si encontramos gap válido
 
         # -------- SUAVIZADO --------
         best_angle      = self.alpha * self.prev_angle + (1.0 - self.alpha) * best_angle
@@ -124,18 +139,31 @@ class FollowGapFinder(Node):
         t = Float32(); t.data = min_ttc;    self.pub_ttc.publish(t)
 
     # -------------------------------------------------------
-    def _find_gaps(self, mask):
+    def _find_gaps(self, mask, min_width_idx):
+        """
+        Encuentra gaps contiguos en el mask, filtrando los menores a min_width_idx.
+        Retorna lista de tuplas (start_idx, end_idx).
+        """
         gaps, start = [], None
         for i, v in enumerate(mask):
             if v and start is None:
                 start = i
             elif not v and start is not None:
-                gaps.append((start, i - 1)); start = None
+                width = i - start
+                # 🔹 Solo agregar si cumple ancho mínimo
+                if width >= min_width_idx:
+                    gaps.append((start, i - 1))
+                start = None
+        # Caso final: gap que llega al último índice
         if start is not None:
-            gaps.append((start, len(mask) - 1))
+            width = len(mask) - start
+            if width >= min_width_idx:
+                gaps.append((start, len(mask) - 1))
         return gaps
     
+    # -------------------------------------------------------
     def _score_gaps(self, gaps, ranges, angles, range_max):
+        """Calcula puntuación para cada gap y retorna el ángulo del mejor."""
         scores = []
         for gs, ge in gaps:
             width_idx = ge - gs
@@ -158,19 +186,52 @@ class FollowGapFinder(Node):
             # 5. Puntuación normalizada
             w_norm = width_idx / len(angles)
             d_norm = avg_depth / range_max
-            score = (0.4 * w_norm) + (0.4 * d_norm) - deadend_pen
+            score = (0.5 * w_norm) + (0.4 * d_norm) - deadend_pen
             
             scores.append((score, center_angle))
         
         # Devuelve el ángulo del gap con mayor puntuación
-        _, best = max(scores, key=lambda x: x[0])
-        return best
+        if scores:
+            _, best = max(scores, key=lambda x: x[0])
+            return best
+        return 0.0  # fallback por seguridad
+    
+    # -------------------------------------------------------
+    def _find_best_fallback_angle(self, ranges, angles, angle_inc, range_max):
+        """
+        🔹 Fallback cuando no hay gaps válidos: 
+        busca el ángulo con mayor distancia segura dentro del FOV.
+        """
+        # Filtrar solo rangos válidos y dentro de clearance mínimo
+        valid_mask = (ranges > self.min_clearance) & (ranges < range_max * 0.9)
+        
+        if not np.any(valid_mask):
+            return None
+        
+        # Puntuar cada ángulo válido: priorizar distancia + centralidad
+        forward_w = np.cos(angles)
+        scores = (
+            0.6 * (ranges / range_max) +          # distancia normalizada
+            0.3 * forward_w +                      # preferir frente
+            0.1 * np.exp(-np.abs(angles) / 0.5)    # suavizar preferencia central
+        )
+        scores[~valid_mask] = -np.inf  # descartar inválidos
+        
+        best_idx = np.argmax(scores)
+        return float(angles[best_idx])
 
 
+# -------------------------------------------------------
 def main(args=None):
     rclpy.init(args=args)
-    rclpy.spin(FollowGapFinder())
-    rclpy.shutdown()
+    node = FollowGapFinder()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

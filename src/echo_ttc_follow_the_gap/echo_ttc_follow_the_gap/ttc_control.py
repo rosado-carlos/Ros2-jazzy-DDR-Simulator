@@ -74,6 +74,11 @@ class TTCControl(Node):
         steering = steering / (1.0 + abs(steering))*self.max_steering                    # suavizado no lineal → (-1, 1)
         steering = max(-self.max_steering, min(self.max_steering, steering))
 
+        if steering > 0.1 and steering < 1.1:
+            steering = 1.1
+        elif steering < -0.1 and steering > -1.1:
+            steering = -1.1
+
         # -------- VELOCIDAD BASE (TTC) --------
         if self.min_ttc <= 0.01:
             scale = 0.0
@@ -87,8 +92,8 @@ class TTCControl(Node):
 
         # -------- VELOCIDAD MÍNIMA GARANTIZADA --------
         # Colisión gestionada por nodo externo; aquí solo garantizamos avance.
-        velocity = max(self.v_min, velocity)
-        velocity = min(1.33, velocity)
+        velocity = max(self.v_max, velocity)
+        velocity = min(self.v_min, velocity)
 
 
         # -------- PUBLICAR --------

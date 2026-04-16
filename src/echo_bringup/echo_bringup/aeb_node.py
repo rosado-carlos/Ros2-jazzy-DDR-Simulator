@@ -54,15 +54,19 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
 
         self.cmdctrl_sub = self.create_subscription(TwistStamped,'/cmd_vel_ctrl',self.cmdctrl_callback,10)
 
+        self.cmdout_sub = self.create_subscription(TwistStamped,'/cmd_vel_out',self.cmdout_callback,1)
+
         # ---------- publisher ----------
         self.cmd_pub = self.create_publisher(TwistStamped,'/cmd_vel_safe',10)
         self.dist_pub = self.create_publisher(Twist,'/dist_min',10)
         self.vx_pub = self.create_publisher(Float32, '/lidar/vx', 10)
+        self.vctrl_pub = self.create_publisher(Float32, '/vctrl/vx', 1)
 
         #Test
         self.d_min = 0.0
         self.twist_w = 0.0
         self.vx_filt = 3.0
+        self.v_ctrl = 0.0
 
     # --------------------------------------------------
     # Small helpers for lidar indexing and validation
@@ -216,6 +220,8 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         vx_filt_last = self.vx_filt    #This store the last filtered velocity before updating.
         self.vx_filt = (1 - alpha) * vx_filt_last + alpha * vx    #This apply a simple low-pass filter to the velocity estimate to reduce noise (optional, can be removed if not desired).
         vx = self.vx_filt    #This use the filtered velocity for TTC computation and decision.
+        if vx < 0.05:
+            vx = 0.0    #This treat very low speeds as zero to avoid noise when stopped.
         vx_msg = Float32()
         vx_msg.data = float(vx)
         self.vx_pub.publish(vx_msg)
@@ -279,6 +285,17 @@ class AEBNode(Node):    #This class implement an AEB (Automatic Emergency Brake)
         self.twist_w = msg.twist.angular.z
         self._forward_Block_(msg)   #This enforces forward blocking when forward_Block is active.
 
+    def cmdout_callback(self, msg):
+        self.v_ctrl = msg.twist.linear.x*2.11 - 2.21
+        v_ctrl_norm = Float32()
+        if self.v_ctrl < 0.6:
+            v_ctrl_norm.data = self.vx_filt
+        else:
+            v_ctrl_norm.data = self.v_ctrl*0.8 + self.vx_filt*0.2
+        if v_ctrl_norm.data < 0.05:
+            v_ctrl_norm.data = 0.0
+        v_ctrl_norm.data = max(0.0, v_ctrl_norm.data)
+        self.vctrl_pub.publish(v_ctrl_norm)
 
 def main(args=None):
     rclpy.init(args=args)

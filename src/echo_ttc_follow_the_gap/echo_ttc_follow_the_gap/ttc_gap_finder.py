@@ -19,11 +19,11 @@ class FollowGapFinder(Node):
         self.declare_parameter('bubble_vel_k',      0.4)    # Factor de velocidad para bubble
         self.declare_parameter('min_clearance',     0.10)   # Distancia mínima a pared [m]
         self.declare_parameter('smooth_alpha',      0.20)   # Suavizado: ↓ más responsivo
-        self.declare_parameter('min_depth_threshold', 0.7)  # <1.2m = probable callejón
-        self.declare_parameter('deadend_weight',      2.1)  # Fuerza del rechazo de callejones
+        self.declare_parameter('min_depth_threshold', 0.9)  # <1.2m = probable callejón
+        self.declare_parameter('deadend_weight',      1.1)  # Fuerza del rechazo de callejones
         
         # 🔹 NUEVO: Ancho mínimo de gap aceptable [grados]
-        self.declare_parameter('min_gap_width_deg',  8.0)  # Gaps <12° se ignoran
+        self.declare_parameter('min_gap_width_deg',  3.0)  # Gaps <12° se ignoran
         
         # Cargar parámetros
         self.ttc_threshold      = self.get_parameter('ttc_min').value
@@ -45,7 +45,7 @@ class FollowGapFinder(Node):
 
         # -------- SUBS --------
         self.create_subscription(LaserScan, '/scan',     self.scan_callback, 10)
-        self.create_subscription(Float32,  '/lidar/vx',  self.vx_callback,   10)
+        self.create_subscription(Float32,  '/vctrl/vx',  self.vx_callback,   10)
 
         # -------- PUBS --------
         self.pub_angle = self.create_publisher(Float32, '/gap_angle', 10)
@@ -186,7 +186,7 @@ class FollowGapFinder(Node):
             # 5. Puntuación normalizada
             w_norm = width_idx / len(angles)
             d_norm = avg_depth / range_max
-            score = (0.5 * w_norm) + (0.4 * d_norm) - deadend_pen
+            score = (0.7 * w_norm) + (0.3 * d_norm) - deadend_pen
             
             scores.append((score, center_angle))
         

@@ -13,6 +13,8 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name,'diffdrive_urdf'), glob('diffdrive_urdf/*.*')),
+        (os.path.join('share', package_name, 'ackerman_urdf'), glob('ackerman_urdf/*.xacro')),
+        (os.path.join('share', package_name, 'config'),glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

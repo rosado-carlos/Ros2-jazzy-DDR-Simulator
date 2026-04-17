@@ -29,7 +29,8 @@ setup(
     entry_points={
         'console_scripts': [
             'twist_key_to_stamped=echo_bringup.twist_key_to_stamped:main',
-            'aeb_node=echo_bringup.aeb_node:main'
+            'aeb_node=echo_bringup.aeb_node:main',
+            'lidar_data=echo_bringup.lidar_data:main',
         ],
     },
 )

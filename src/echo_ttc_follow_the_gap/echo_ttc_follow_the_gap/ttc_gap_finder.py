@@ -45,7 +45,7 @@ class FollowGapFinder(Node):
 
         # -------- SUBS --------
         self.create_subscription(LaserScan, '/scan',     self.scan_callback, 10)
-        self.create_subscription(Float32,  '/vctrl/vx',  self.vx_callback,   10)
+        self.create_subscription(Float32,  '/lidar/vctrl',  self.vx_callback,   10)
 
         # -------- PUBS --------
         self.pub_angle = self.create_publisher(Float32, '/gap_angle', 10)

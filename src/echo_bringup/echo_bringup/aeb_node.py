@@ -12,8 +12,8 @@ class AEBNode(Node):
         super().__init__('aeb')
 
         # ---------- parameters ----------
-        self.declare_parameter("ttc_threshold",       0.45)
-        self.declare_parameter("secure_min_distance", 0.6)
+        self.declare_parameter("ttc_threshold",       0.15)
+        self.declare_parameter("secure_min_distance", 0.4)
         self.declare_parameter("robot_radius",        0.45)
         self.declare_parameter("min_speed",           0.05)
         self.declare_parameter("brake_gain",          1.5)   # fracción de v_ctrl aplicada como freno
@@ -121,7 +121,7 @@ class AEBNode(Node):
         out = TwistStamped()
         out.header.stamp    = self.get_clock().now().to_msg()
         out.twist.linear.x  = brake_cmd
-        out.twist.angular.z = self.twist_w
+        out.twist.angular.z = 0.0
         self.cmd_pub.publish(out)
 
     def _publish_zero(self):

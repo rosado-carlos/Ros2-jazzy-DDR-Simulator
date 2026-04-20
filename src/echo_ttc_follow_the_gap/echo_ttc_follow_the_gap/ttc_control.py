@@ -74,18 +74,13 @@ class TTCControl(Node):
         steering = steering / (1.0 + abs(steering))*self.max_steering                    # suavizado no lineal → (-1, 1)
         steering = max(-self.max_steering, min(self.max_steering, steering))
 
-        if steering > 0.1 and steering < 1.4:
-            steering = 1.4
-        elif steering < -0.1 and steering > -1.4:
-            steering = -1.4
+        # if steering > 0.1 and steering < 1.1:
+        #     steering = 1.1
+        # elif steering < -0.1 and steering > -1.1:
+        #     steering = -1.1
 
-        # -------- VELOCIDAD BASE (TTC) --------
-        if self.min_ttc <= 0.01:
-            scale = 0.0
-        else:
-            scale = min(self.min_ttc / self.ttc_ref, 1.0)
 
-        base_vel = self.v_max * scale
+        base_vel = self.v_max
 
         # -------- ACOPLAMIENTO GIRO–VELOCIDAD --------
         velocity = base_vel / (1.0 + self.slow_gain * abs(steering))

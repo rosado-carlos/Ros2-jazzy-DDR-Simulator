@@ -20,10 +20,10 @@ class FollowGapFinder(Node):
         self.declare_parameter('min_clearance',     0.10)   # Distancia mínima a pared [m]
         self.declare_parameter('smooth_alpha',      0.20)   # Suavizado: ↓ más responsivo
         self.declare_parameter('min_depth_threshold', 0.9)  # <1.2m = probable callejón
-        self.declare_parameter('deadend_weight',      1.1)  # Fuerza del rechazo de callejones
+        self.declare_parameter('deadend_weight',      0.0)  # Fuerza del rechazo de callejones
         
         # 🔹 NUEVO: Ancho mínimo de gap aceptable [grados]
-        self.declare_parameter('min_gap_width_deg',  3.0)  # Gaps <12° se ignoran
+        self.declare_parameter('min_gap_width_deg',  6.0)  # Gaps <12° se ignoran
         
         # Cargar parámetros
         self.ttc_threshold      = self.get_parameter('ttc_min').value
@@ -114,21 +114,25 @@ class FollowGapFinder(Node):
             self.no_gap_counter += 1
             # 🔹 FALLBACK MEJORADO: buscar dirección más segura, no alternar ciegamente
             if self.no_gap_counter > 20:  # ~1s a 20Hz
-                best_fallback = self._find_best_fallback_angle(
-                    ranges, angles, msg.angle_increment, msg.range_max
-                )
-                best_angle = best_fallback if best_fallback is not None else (1.5 * self.search_dir)
-                self.search_dir *= -1.0  # alternar para próxima vez
+                # best_fallback = self._find_best_fallback_angle(
+                #     ranges, angles, msg.angle_increment, msg.range_max
+                # )
+                # best_angle = best_fallback if best_fallback is not None else (1.5 * self.search_dir)
+                # self.search_dir *= -1.0  # alternar para próxima vez
                 self.no_gap_counter = 0
                 self.get_logger().warn(
                     f"Sin gaps válidos → fallback ({best_angle:+.2f} rad)"
                 )
+                self.fov = math.radians(90.0)  # ampliar FOV en fallback para más opciones
             else:
                 # Mantener último ángulo mientras esperamos
-                best_angle = self.prev_angle
+                best_angle = 0.0
+                self.fov = math.radians(self.get_parameter('fov_deg').value)  # resetear FOV normal
+
         else:
             best_angle = self._score_gaps(gaps, ranges, angles, msg.range_max)
             self.no_gap_counter = 0  # resetear contador si encontramos gap válido
+            self.fov = math.radians(self.get_parameter('fov_deg').value)  # resetear FOV normal
 
         # -------- SUAVIZADO --------
         best_angle      = self.alpha * self.prev_angle + (1.0 - self.alpha) * best_angle
@@ -186,7 +190,7 @@ class FollowGapFinder(Node):
             # 5. Puntuación normalizada
             w_norm = width_idx / len(angles)
             d_norm = avg_depth / range_max
-            score = (0.4 * w_norm) + (0.15 * d_norm) - deadend_pen
+            score = (0.6 * w_norm) + (0.4 * d_norm)
             
             scores.append((score, center_angle))
         

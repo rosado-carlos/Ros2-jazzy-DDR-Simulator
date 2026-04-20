@@ -186,7 +186,7 @@ class FollowGapFinder(Node):
             # 5. Puntuación normalizada
             w_norm = width_idx / len(angles)
             d_norm = avg_depth / range_max
-            score = (0.7 * w_norm) + (0.3 * d_norm) - deadend_pen
+            score = (0.4 * w_norm) + (0.15 * d_norm) - deadend_pen
             
             scores.append((score, center_angle))
         

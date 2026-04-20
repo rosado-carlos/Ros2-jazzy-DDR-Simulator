@@ -11,10 +11,10 @@ twist_mux:
         topic   : cmd_vel_joy
         timeout : 0.5
         priority: 200
-      safety  : 
-        topic   : cmd_vel_safe
-        timeout : 0.5
-        priority: 300                                                  
+      # safety  : 
+      #   topic   : cmd_vel_safe
+      #   timeout : 0.5
+      #   priority: 300                                                  
       keyboard  : 
         topic   : cmd_vel_key
         timeout : 0.5

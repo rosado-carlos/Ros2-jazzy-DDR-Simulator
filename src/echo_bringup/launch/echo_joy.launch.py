@@ -32,12 +32,18 @@ def generate_launch_description():
     twist_mux_node = Node(package='twist_mux', 
                     executable='twist_mux',
                     parameters=[twist_mux_params,{'use_sim_time': False}],
-                    remappings=[('/cmd_vel_out','/cmd_vel_out')]
+                    remappings=[('/cmd_vel_out','/cmd_vel_mux')]
     )
 
     aeb_node = Node(
         package=bringup_pkg_name,
         executable='aeb_node',
+        output='screen'
+    )
+
+    lidar_data_node = Node(
+        package=bringup_pkg_name,
+        executable='lidar_data',
         output='screen'
     )
 
@@ -47,4 +53,5 @@ def generate_launch_description():
         teleop_node,
         twist_mux_node,
         aeb_node,
+        lidar_data_node
     ])

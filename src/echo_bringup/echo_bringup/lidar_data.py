@@ -30,8 +30,8 @@ class LidarDataNode(Node):
 
         # ---------- ROS ----------
         self.scan_sub = self.create_subscription(LaserScan, '/scan', self.scan_callback, 1)
-        #self.cmdout_sub = self.create_subscription(TwistStamped, '/cmd_vel_out', self.cmdout_callback, 10)
-        self.cmdout_sub = self.create_subscription(TwistStamped, '/diffdrive_controller/cmd_vel', self.cmdout_callback, 10)
+        self.cmdout1_sub = self.create_subscription(TwistStamped, '/cmd_vel_mux', self.cmdout_callback, 10)
+        #self.cmdout_sub = self.create_subscription(TwistStamped, '/diffdrive_controller/cmd_vel', self.cmdout_callback, 10)
 
 
         self.vx_pub = self.create_publisher(Float32, '/lidar/vx', 10)
@@ -163,8 +163,8 @@ class LidarDataNode(Node):
     def cmdout_callback(self, msg):
 
         # misma lógica que tenías en AEB
-        # self.v_ctrl = msg.twist.linear.x * 2.11 - 2.21
-        self.v_ctrl = msg.twist.linear.x
+        self.v_ctrl = msg.twist.linear.x * 2.11 - 2.21
+        #self.v_ctrl = msg.twist.linear.x
 
     # --------------------------------------------------
     # MAIN CALLBACK
@@ -185,7 +185,10 @@ class LidarDataNode(Node):
             vx = 0.0
 
         # ---------- VCTRL FUSION ----------
-        alpha_ctrl = 0.85          # 85% diff_drive, 15% LiDAR
+        if self.v_ctrl < vx and self.v_ctrl < 0.6 or vx < 0.1:
+             alpha_ctrl = 0.2
+        else:
+            alpha_ctrl = 0.85          # 85% diff_drive, 15% LiDAR
         vctrl = alpha_ctrl * self.v_ctrl + (1 - alpha_ctrl) * vx
 
         if vctrl < self.min_speed:

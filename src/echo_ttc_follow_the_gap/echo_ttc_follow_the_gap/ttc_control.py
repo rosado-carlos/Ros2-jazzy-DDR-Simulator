@@ -45,7 +45,7 @@ class TTCControl(Node):
         self.cmd_pub = self.create_publisher(TwistStamped, '/cmd_vel_ctrl', 10)
 
         # -------- TIMER 20 Hz --------
-        self.create_timer(0.05, self.compute_and_publish)
+        self.create_timer(0.02, self.compute_and_publish)
 
         self.get_logger().info(
             f"TTCControl OK | v_max={self.v_max} v_min={self.v_min} "
@@ -74,10 +74,10 @@ class TTCControl(Node):
         steering = steering / (1.0 + abs(steering))*self.max_steering                    # suavizado no lineal → (-1, 1)
         steering = max(-self.max_steering, min(self.max_steering, steering))
 
-        if steering > 0.1 and steering < 1.1:
-            steering = 1.1
-        elif steering < -0.1 and steering > -1.1:
-            steering = -1.1
+        if steering > 0.1 and steering < 1.4:
+            steering = 1.4
+        elif steering < -0.1 and steering > -1.4:
+            steering = -1.4
 
         # -------- VELOCIDAD BASE (TTC) --------
         if self.min_ttc <= 0.01:

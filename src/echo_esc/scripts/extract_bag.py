@@ -32,8 +32,8 @@ def read_topic(reader, typestore, topic_name, fields_fn):
 
 
 def extract_pose(msg):
-    p = msg.pose.position
-    o = msg.pose.orientation
+    p = msg.position
+    o = msg.orientation
     # Convert quaternion to yaw (2D assumption)
     yaw = np.arctan2(
         2.0 * (o.w * o.z + o.x * o.y),
@@ -43,43 +43,35 @@ def extract_pose(msg):
 
 
 def extract_esc_command(msg):
-    return (float(msg.data),)
-
-
-def extract_joy(msg):
-    # axes[1] = left stick vertical (throttle), axes[3] = right stick horizontal (steering)
-    throttle = float(msg.axes[1]) if len(msg.axes) > 1 else 0.0
-    steering  = float(msg.axes[3]) if len(msg.axes) > 3 else 0.0
-    return (throttle, steering)
+    forward=msg.twist.linear.x
+    drift=msg.twist.angular.z
+    return (float(forward),float(drift),)
 
 
 with Reader(BAG_PATH) as reader:
     print(f"Reading bag:{BAG_PATH}")
 
-    df_pose = read_topic(reader, TYPESTORE, "/vicon/zulu/pose", extract_pose)
-    df_cmd  = read_topic(reader, TYPESTORE, "/esc/command",     extract_esc_command)
-    df_joy  = read_topic(reader, TYPESTORE, "/joy",             extract_joy)
+    df_pose = read_topic(reader, TYPESTORE, "/robot1/pose", extract_pose)
+    df_cmd  = read_topic(reader, TYPESTORE, "/cmd_vel_out",     extract_esc_command)
 
 df_pose.columns = ["t", "x", "y", "z", "yaw"]
-df_cmd.columns  = ["t", "u"]
-df_joy.columns  = ["t", "joy_throttle", "joy_steering"]
+df_cmd.columns  = ["t", "throttle", "steering"]
 
 # Sort by time
-for df in [df_pose, df_cmd, df_joy]:
+for df in [df_pose, df_cmd]:
     df.sort_values("t", inplace=True)
     df.reset_index(drop=True, inplace=True)
 
 # Save raw
 df_pose.to_csv("pose_raw.csv", index=False)
-df_cmd.to_csv("esc_command_raw.csv", index=False)
-df_joy.to_csv("joy_raw.csv", index=False)
+df_cmd.to_csv("command_raw.csv", index=False)
 
 # Align time to start at 0
 t0 = min(df_pose["t"].iloc[0], df_cmd["t"].iloc[0])
-for df in [df_pose, df_cmd, df_joy]:
+for df in [df_pose, df_cmd]:
     df["t"] -= t0
 
 print(f"  VICON  :{len(df_pose)} samples, dt={df_pose['t'].diff().median()*1000:.1f} ms")
-print(f"  ESC cmd:{len(df_cmd)}  samples, dt={df_cmd['t'].diff().median()*1000:.1f} ms")
-print(f"  Joy    :{len(df_joy)}  samples, dt={df_joy['t'].diff().median()*1000:.1f} ms")
-print("Saved: pose_raw.csv, esc_command_raw.csv, joy_raw.csv")
+print(f" cmd_vel:{len(df_cmd)}  samples, dt={df_cmd['t'].diff().median()*1000:.1f} ms")
+
+print("Saved: pose_raw.csv, command_raw.csv")

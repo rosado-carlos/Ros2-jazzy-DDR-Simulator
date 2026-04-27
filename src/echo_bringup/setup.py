@@ -31,6 +31,7 @@ setup(
             'twist_key_to_stamped=echo_bringup.twist_key_to_stamped:main',
             'aeb_node=echo_bringup.aeb_node:main',
             'lidar_data=echo_bringup.lidar_data:main',
+            'speed_estimator_node=echo_bringup.speed_estimator_node:main',
         ],
     },
 )

@@ -33,6 +33,7 @@ setup(
             'map_waypoint_mission=echo_path_planner.map_waypoint_mission:main',
             'teb_controller_node=echo_path_planner.teb_controller_node:main',
             'ara_path_planner=echo_path_planner.ara_path_planner:main',
+            'editable_waypoint_manager=echo_path_planner.editable_waypoint_manager:main',
         ],
     },
 )

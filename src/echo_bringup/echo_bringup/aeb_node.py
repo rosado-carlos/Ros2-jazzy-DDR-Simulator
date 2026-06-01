@@ -83,7 +83,10 @@ class AEBNode(Node):
         # Pass-through normal
         out = TwistStamped()
         out.header.stamp    = self.get_clock().now().to_msg()
-        out.twist.linear.x  = msg.twist.linear.x
+        if np.abs(msg.twist.linear.x) > 2.3:
+            out.twist.linear.x  = 2.3 * np.sign(msg.twist.linear.x)
+        else:
+            out.twist.linear.x  = msg.twist.linear.x
         out.twist.angular.z = msg.twist.angular.z
         self.cmd_pub.publish(out)
 
@@ -158,6 +161,7 @@ class AEBNode(Node):
 
         # ── LOCK condition ──────────────────────────────
         self.lock = (self.d_min <= 1.4) and (ttc_min < self.ttc_threshold) or self.d_min <= self.radius
+        self.lock = False  # DESACTIVADO TEMPORALMENTE PARA PRUEBAS
 
         if self.lock and not prev_lock:
             # self.braking = True
